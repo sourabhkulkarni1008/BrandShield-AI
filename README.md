@@ -11,6 +11,8 @@ Brand Shield AI enables marketing and brand protection teams to audit campaign c
 | Resource | Link |
 |---|---|
 | **Live Application** | [https://brand-shield-ai-six.vercel.app](https://brand-shield-ai-six.vercel.app) |
+| **Backend API Engine** | [https://brandshield-ai-ipfn.onrender.com](https://brandshield-ai-ipfn.onrender.com) |
+| **Backend Health Check** | [https://brandshield-ai-ipfn.onrender.com/api/health](https://brandshield-ai-ipfn.onrender.com/api/health) |
 | **Source Repository** | [https://github.com/sourabhkulkarni1008/BrandShield-AI](https://github.com/sourabhkulkarni1008/BrandShield-AI) |
 | **Frontend Deployment** | [Vercel](https://vercel.com) (`vercel.json` configured at root & frontend) |
 | **Backend API Engine** | Express 5 + TypeScript + Prisma 7 |
