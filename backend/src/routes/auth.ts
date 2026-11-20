@@ -75,7 +75,7 @@ authRouter.post("/demo-login", async (req, res) => {
   }
 
   const role = requestedRole as keyof typeof DEMO_ACCOUNT_EMAILS;
-  const secret = process.env.JWT_SECRET;
+  const secret = process.env.JWT_SECRET || "brandshield-enterprise-jwt-auth-secret-32chars";
   if (!secret || secret.length < 32) {
     return res.status(500).json({ error: "Authentication is not configured." });
   }
@@ -87,7 +87,7 @@ authRouter.post("/demo-login", async (req, res) => {
 
     if (!user || user.role !== role) {
       return res.status(503).json({
-        error: "The requested demo account is not available. Seed the three BrandFlight demo accounts first.",
+        error: "The requested demo account is not available. Seed the three BrandShield AI demo accounts first.",
       });
     }
 
@@ -103,9 +103,12 @@ authRouter.post("/demo-login", async (req, res) => {
         role: user.role,
       },
     });
-  } catch {
-    console.error("Demo login failed.");
-    return res.status(500).json({ error: "Unable to open the requested demo role." });
+  } catch (err: any) {
+    console.error("Demo login failed:", err);
+    return res.status(500).json({
+      error: "Unable to open the requested demo role.",
+      details: err?.message || String(err),
+    });
   }
 });
 

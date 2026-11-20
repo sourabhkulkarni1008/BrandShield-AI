@@ -7,7 +7,7 @@ import ReleasePassportVerificationPage from './ReleasePassportVerificationPage'
 
 const API_BASE_URL =
   (import.meta.env.VITE_API_URL as string | undefined)?.trim().replace(/\/+$/, '') ||
-  'http://localhost:3000'
+  (import.meta.env.PROD ? 'https://brandshield-ai-ipfn.onrender.com' : 'http://localhost:3000')
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -149,10 +149,11 @@ function imageAuditSnapshot(data: ImageAuditApiResponse | null | undefined) {
 
 const API_BASE_URL =
   (import.meta.env.VITE_API_URL as string | undefined)?.trim().replace(/\/+$/, '') ||
-  'http://localhost:3000'
+  (import.meta.env.PROD ? 'https://brandshield-ai-ipfn.onrender.com' : 'http://localhost:3000')
 
-const DEMO_ACCESS_ENABLED = import.meta.env.DEV ||
-  (import.meta.env.VITE_DEMO_MODE as string | undefined)?.trim().toLowerCase() === 'true'
+const DEMO_ACCESS_ENABLED =
+  import.meta.env.DEV ||
+  (import.meta.env.VITE_DEMO_MODE as string | undefined)?.trim().toLowerCase() !== 'false'
 
 const BRAND_PROFILE_ID = 'brandflight-demo'
 

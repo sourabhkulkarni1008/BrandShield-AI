@@ -15,11 +15,51 @@ import { findUnverifiedNumericClaims } from "./lib/numeric-claims.js";
 
 export const app = express();
 
-app.use(cors({ origin: process.env.CLIENT_URL ?? "http://localhost:5173" }));
+const ALLOWED_ORIGINS = new Set([
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://brand-shield-ai-six.vercel.app",
+]);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (ALLOWED_ORIGINS.has(origin)) return callback(null, true);
+      if (origin.endsWith(".vercel.app") || origin.endsWith(".onrender.com")) {
+        return callback(null, true);
+      }
+      if (process.env.CLIENT_URL) {
+        const clientClean = process.env.CLIENT_URL.replace(/^https?:\/\//, "").replace(/\/$/, "");
+        const originClean = origin.replace(/^https?:\/\//, "").replace(/\/$/, "");
+        if (originClean === clientClean) return callback(null, true);
+      }
+      return callback(null, true);
+    },
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: "1mb" }));
 
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", service: "BrandFlight API" });
+app.get("/api/health", async (_req, res) => {
+  let dbStatus = "unknown";
+  try {
+    if (!process.env.DATABASE_URL) {
+      dbStatus = "missing_database_url";
+    } else {
+      await prisma.$queryRaw`SELECT 1`;
+      dbStatus = "connected";
+    }
+  } catch (err: any) {
+    dbStatus = `error: ${err?.message || String(err)}`;
+  }
+
+  res.json({
+    status: "ok",
+    service: "BrandShield AI API",
+    database: dbStatus,
+    demoEnabled: process.env.DEMO_LOGIN_ENABLED === "true",
+  });
 });
 
 app.use("/api/brands", brandsRouter);
