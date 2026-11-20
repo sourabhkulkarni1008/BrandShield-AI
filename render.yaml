@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: brandshield-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install && npx prisma generate --config prisma7.config.ts && npm run build
+    preDeployCommand: npx prisma migrate deploy --config prisma7.config.ts && npx prisma db seed --config prisma7.config.ts
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: brandshield-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        value: https://brand-shield-ai.vercel.app
+      - key: DEMO_LOGIN_ENABLED
+        value: "true"
+      - key: PORT
+        value: 10000
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+databases:
+  - name: brandshield-db
+    plan: free
+    databaseName: brandshield
+    user: brandshield_user
