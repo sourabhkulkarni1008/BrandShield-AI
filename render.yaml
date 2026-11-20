@@ -15,7 +15,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CLIENT_URL
-        value: https://brand-shield-ai.vercel.app
+        value: https://brand-shield-ai-six.vercel.app
       - key: DEMO_LOGIN_ENABLED
         value: "true"
       - key: PORT
