@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import BrandFlightLogo from './BrandFlightLogo'
+import './BrandShieldTheme.css'
+import BrandShieldLogo from './BrandShieldLogo'
 
 interface VerificationResponse {
   valid: boolean
@@ -146,7 +147,7 @@ export default function ReleasePassportVerificationPage({ apiBaseUrl }: Props) {
       <div className="bf-passport-verify-shell">
         <header className="bf-passport-verify-header">
           <a className="bf-passport-brand" href="/" aria-label="Brand Shield AI home">
-            <BrandFlightLogo variant="verification" />
+            <BrandShieldLogo variant="verification" />
           </a>
           <span className="bf-passport-header-label">RELEASE PASSPORT</span>
         </header>

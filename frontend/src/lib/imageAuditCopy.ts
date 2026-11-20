@@ -93,11 +93,11 @@ function manualReviewCopy(region: ImageTextContrastRegion): ReadableImageFinding
       action: 'Use a simpler backing area or inspect the text against the final exported image manually.',
     },
     SOLID: {
-      found: `BrandFlight could not confidently separate the text and background colours${location}.`,
+      found: `Brand Shield AI could not confidently separate the text and background colours${location}.`,
       action: 'Inspect the text and its immediate background in the source design, then run the image audit again.',
     },
     UNKNOWN: {
-      found: `BrandFlight could not confidently identify the background behind ${text}${location}.`,
+      found: `Brand Shield AI could not confidently identify the background behind ${text}${location}.`,
       action: 'Check the actual text and background in the source design. Use a solid backing if the colours are difficult to distinguish.',
     },
   }
@@ -127,8 +127,8 @@ export function getReadableImageFindingCopy(
     return {
       summary: 'Text contrast could not be checked automatically',
       whatFound: analysis?.status === 'UNAVAILABLE'
-        ? 'The image contrast check did not complete, so BrandFlight could not confirm whether the text is readable.'
-        : 'BrandFlight could not match this finding to a measured text area.',
+        ? 'The image contrast check did not complete, so Brand Shield AI could not confirm whether the text is readable.'
+        : 'Brand Shield AI could not match this finding to a measured text area.',
       whatToDo: 'Inspect the text against its actual background in the exported design, or run the image audit again.',
     }
   }

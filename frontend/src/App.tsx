@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type SubmitEvent, type ReactNode } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import './App.css'
-import BrandFlightLogo from './BrandFlightLogo'
+import './BrandShieldTheme.css'
+import BrandShieldLogo from './BrandShieldLogo'
 import LandingPage from './LandingPage'
 import ImageTextContrastReport from './ImageTextContrastReport'
 import type { ImageAuditData as ImageAuditApiResponse } from './types/imageAudit'
@@ -1199,7 +1200,7 @@ export function App() {
     return (
       <div className="bf-auth-screen">
         <div className="bf-auth-card">
-          <BrandFlightLogo variant="auth" />
+          <BrandShieldLogo variant="auth" />
           <h1>Checking session</h1>
           <p>Verifying your sign-in…</p>
         </div>
@@ -1228,7 +1229,7 @@ export function App() {
           >
             ← Back to Brand Shield AI
           </button>
-          <BrandFlightLogo variant="auth" />
+          <BrandShieldLogo variant="auth" />
           <h1 className="bf-auth-title">Welcome to Brand Shield AI</h1>
           <p className="bf-auth-subtitle">
             Sign in to govern campaign content against brand rules and compliance policies.
@@ -1583,7 +1584,7 @@ export function App() {
     return (
       <div className="bf-auth-screen">
         <div className="bf-auth-card">
-          <BrandFlightLogo variant="auth" />
+          <BrandShieldLogo variant="auth" />
           <h1 className="bf-auth-title">Page not found</h1>
           <p className="bf-auth-subtitle">
             This Brand Shield AI URL does not match a known feature.
@@ -1607,7 +1608,7 @@ export function App() {
         <div className="bf-header-container">
           <div className="bf-header-topline">
             <div className="bf-header-left">
-              <BrandFlightLogo variant="header" />
+              <BrandShieldLogo variant="header" />
             </div>
 
             <div className="bf-header-right">
