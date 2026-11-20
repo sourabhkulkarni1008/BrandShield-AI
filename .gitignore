@@ -1,0 +1,21 @@
+node_modules/
+**/node_modules/
+
+# Environment variables
+**/.env
+**/.env.*
+!**/.env.example
+
+# Generated files
+backend/generated/
+backend/dist/
+
+# Local AI tooling
+backend/.agents/
+backend/.claude/
+backend/.windsurf/
+backend/skills-lock.json
+/.brandflight-backups/
+/repomix-output*.xml
+/frontend/src/*.backup-*
+/frontend/src/*.brandflight-backup-*
