@@ -286,8 +286,50 @@ body {
   gap: 8px !important;
   width: 100% !important;
   padding: 8px 0 10px !important;
+  background: transparent !important;
+  border: none !important;
   border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   overflow-x: auto !important;
+}
+
+.bf-campaign-status-item {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  padding: 10px 14px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
+  background: rgba(8, 14, 26, 0.85) !important;
+  transition: all 0.2s ease !important;
+}
+
+.bf-campaign-status-item:hover {
+  border-color: rgba(0, 242, 254, 0.3) !important;
+  background: rgba(11, 19, 36, 0.95) !important;
+}
+
+.bf-campaign-status-item > span {
+  color: #94a3b8 !important;
+  font-size: 11.5px !important;
+  font-weight: 650 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.bf-campaign-status-item > strong {
+  color: #f8fafc !important;
+  font-size: 13.5px !important;
+  font-weight: 750 !important;
+}
+
+.bf-campaign-status-item > strong.is-ready {
+  color: #34d399 !important;
+}
+
+.bf-campaign-status-item > strong.is-pending {
+  color: #fbbf24 !important;
 }
 
 .bf-nav-link {
