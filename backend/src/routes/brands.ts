@@ -197,6 +197,72 @@ async function requireBrand(brandProfileId: string) {
   });
 }
 
+const FALLBACK_DEMO_BRAND = {
+  id: "brandflight-demo",
+  name: "PahariKnits",
+  description:
+    "Direct-to-consumer Himalayan apparel brand with a product catalogue covering region-specific textiles, materials, dimensions, care guidance, and return terms.",
+  brandColors: ["#1D3461", "#152648", "#A86D2B", "#F7F5F1", "#2A7A8A", "#1A2438"],
+  accessibilityPairs: [
+    { role: "BODY_TEXT", foreground: "#1A2438", background: "#F7F5F1" },
+    { role: "HEADING", foreground: "#152648", background: "#F7F5F1" },
+    { role: "CTA_TEXT", foreground: "#000000", background: "#A86D2B" },
+    { role: "CAPTION", foreground: "#4A5A72", background: "#F7F5F1" },
+    { role: "UI_ELEMENT", foreground: "#1D3461", background: "#F7F5F1" },
+  ],
+  rules: [
+    {
+      id: "rule-tone-01",
+      ruleCode: "TONE-01",
+      category: "TONE",
+      title: "Use warm, craft-led product storytelling",
+      description:
+        "Write in a warm, respectful, informative voice. Keep product copy specific and grounded in the approved catalogue. Describe regional craft, materials, and techniques only when they are supported for the product being promoted.",
+      isActive: true,
+      pattern: null,
+    },
+    {
+      id: "rule-term-01",
+      ruleCode: "TERM-01",
+      category: "TERMINOLOGY",
+      title: "Reserve Pashmina for certified Ladakh yarn",
+      description:
+        "Do not describe an item as Pashmina unless it specifies certified Changthangi wool sourced from Ladakh.",
+      isActive: true,
+      pattern: null,
+    },
+    {
+      id: "rule-claim-01",
+      ruleCode: "CLAIM-01",
+      category: "CLAIM",
+      title: "Support numeric claims with approved facts",
+      description:
+        "Any quantitative claims regarding sizing, return periods, wash temperature, or thread count must align with the approved facts catalogue.",
+      isActive: true,
+      pattern: null,
+    },
+  ],
+  facts: [
+    {
+      id: "fact-01",
+      factCode: "FACT-RETURN-01",
+      claim: "Standard return window is 14 days from delivery.",
+      sourceLabel: "Approved product terms",
+      sourceUrl: null,
+      isActive: true,
+    },
+    {
+      id: "fact-02",
+      factCode: "FACT-ORIGIN-01",
+      claim: "All certified Pashmina items are hand-spun in Ladakh.",
+      sourceLabel: "Sourcing verification",
+      sourceUrl: null,
+      isActive: true,
+    },
+  ],
+  assets: [],
+};
+
 // Read the brand, active rules, and active facts.
 brandsRouter.get("/:brandProfileId", async (req, res) => {
   try {
@@ -215,14 +281,18 @@ brandsRouter.get("/:brandProfileId", async (req, res) => {
       },
     });
 
-    if (!brand) {
-      return res.status(404).json({ error: "Brand profile not found." });
+    if (brand) {
+      return res.json(brand);
     }
-
-    return res.json(brand);
   } catch (error) {
-    return databaseError(res, error, "Unable to load brand profile:");
+    console.warn("DB brand lookup failed, checking fallback:", error);
   }
+
+  if (req.params.brandProfileId === "brandflight-demo") {
+    return res.json(FALLBACK_DEMO_BRAND);
+  }
+
+  return res.status(404).json({ error: "Brand profile not found." });
 });
 
 // Update brand identity, palette, and manager-defined accessible color-role standards.
