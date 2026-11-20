@@ -505,7 +505,7 @@ export default function SavedSubmissionsPanel({
                       <span className={`bf-saved-status ${item.status.toLowerCase().replace(/_/g, '-')}`}>
                         {statusLabel(item.status)}
                       </span>
-                      <span className="bf-saved-brand">{item.brandProfile?.name ?? 'BrandFlight'}</span>
+                      <span className="bf-saved-brand">{item.brandProfile?.name ?? 'Brand Shield AI'}</span>
                     </div>
 
                     {item.imageUrl && (

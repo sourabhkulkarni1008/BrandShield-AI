@@ -105,7 +105,7 @@ export default function ReleasePassportVerificationPage({ apiBaseUrl }: Props) {
     {
       key: 'passport',
       title: 'Passport signature',
-      detail: 'The approval snapshot has a valid BrandFlight signature.',
+      detail: 'The approval snapshot has a valid Brand Shield AI signature.',
       passed: result.checks.passportSignature,
       notApplicable: false,
     },
@@ -145,7 +145,7 @@ export default function ReleasePassportVerificationPage({ apiBaseUrl }: Props) {
     <main className="bf-passport-verify-page">
       <div className="bf-passport-verify-shell">
         <header className="bf-passport-verify-header">
-          <a className="bf-passport-brand" href="/" aria-label="BrandFlight home">
+          <a className="bf-passport-brand" href="/" aria-label="Brand Shield AI home">
             <BrandFlightLogo variant="verification" />
           </a>
           <span className="bf-passport-header-label">RELEASE PASSPORT</span>
@@ -188,7 +188,7 @@ export default function ReleasePassportVerificationPage({ apiBaseUrl }: Props) {
                   <div>
                     <h1>{result.valid ? 'Release passport verified' : 'Verification needs attention'}</h1>
                     <p>{result.valid
-                      ? 'This campaign matches the version and approval record held by BrandFlight.'
+                      ? 'This campaign matches the version and approval record held by Brand Shield AI.'
                       : 'This passport did not pass every check. Review the mismatches below before relying on this approval record.'}</p>
                   </div>
                 </div>
@@ -257,7 +257,7 @@ export default function ReleasePassportVerificationPage({ apiBaseUrl }: Props) {
               <div className="bf-passport-section-heading bf-passport-checks-heading">
                 <div>
                   <p className="bf-passport-eyebrow">INTEGRITY CHECKS</p>
-                  <h2 id="bf-passport-checks-title">What did BrandFlight verify?</h2>
+                  <h2 id="bf-passport-checks-title">What did Brand Shield AI verify?</h2>
                   <p>Each check compares the issued record with the current campaign state.</p>
                 </div>
                 <strong className="bf-passport-check-count">{checkRows.filter((check) => !check.notApplicable && check.passed === true).length} / {checkRows.filter((check) => !check.notApplicable).length} required checks verified</strong>
@@ -301,7 +301,7 @@ export default function ReleasePassportVerificationPage({ apiBaseUrl }: Props) {
               <p>A verified passport confirms the integrity of the recorded approval, campaign snapshot and audit evidence. It is not a legal compliance certificate and does not independently prove that marketing claims are true.</p>
             </footer>
             <div className="bf-passport-page-footer">
-              <span>BrandFlight · Public, read-only verification</span>
+              <span>Brand Shield AI · Public, read-only verification</span>
               <button type="button" onClick={() => setRetryCount((count) => count + 1)}>Recheck</button>
             </div>
           </>

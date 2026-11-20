@@ -602,7 +602,7 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
                       {approvalBlocked
                         ? 'Required image alt text is missing. Add a meaningful description and run Image Audit again. This deterministic requirement cannot be overridden. Other AI findings may still be accepted by a reviewer or manager with a reason.'
                         : requiresReviewerOverride
-                          ? 'These findings are risk signals, not automatic vetoes. A reviewer or manager may accept AI-detected issues with a reason of at least 10 characters. BrandFlight records that reason against the exact findings in the activity log and signed Release Passport.'
+                          ? 'These findings are risk signals, not automatic vetoes. A reviewer or manager may accept AI-detected issues with a reason of at least 10 characters. Brand Shield AI records that reason against the exact findings in the activity log and signed Release Passport.'
                           : 'No outstanding findings. The server still revalidates the audit receipts, campaign inputs and required audit status before approval.'}
                     </p>
                   </article>

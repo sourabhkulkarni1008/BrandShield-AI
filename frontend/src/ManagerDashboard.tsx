@@ -381,7 +381,7 @@ export default function ManagerDashboard({
                     >
                       <td>
                         <strong>{item.title}</strong>
-                        <small>{item.brandProfile?.name ?? 'BrandFlight'}</small>
+                        <small>{item.brandProfile?.name ?? 'Brand Shield AI'}</small>
                       </td>
                       <td>{item.creator?.name ?? '—'}</td>
                       <td>

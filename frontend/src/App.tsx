@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef, type SubmitEvent, ty
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import './App.css'
 import BrandFlightLogo from './BrandFlightLogo'
+import LandingPage from './LandingPage'
 import ImageTextContrastReport from './ImageTextContrastReport'
 import type { ImageAuditData as ImageAuditApiResponse } from './types/imageAudit'
 import { getReadableImageFindingCopy } from './lib/imageAuditCopy'
@@ -527,8 +528,8 @@ export function App() {
     if (authChecking) return
 
     if (!authSession) {
-      if (routePath !== '/login') {
-        navigate('/login', { replace: true })
+      if (routePath !== '/' && routePath !== '/login') {
+        navigate('/', { replace: true })
       }
       return
     }
@@ -556,13 +557,13 @@ export function App() {
       activeView === 'approved' ||
       (authSession.user.role === 'CREATOR'
         ? activeView === 'workspace' ||
-          activeView === 'image' ||
-          activeView === 'submissions'
+        activeView === 'image' ||
+        activeView === 'submissions'
         : authSession.user.role === 'REVIEWER'
           ? activeView === 'review'
           : activeView === 'manager' ||
-            activeView === 'review' ||
-            activeView === 'rulebook')
+          activeView === 'review' ||
+          activeView === 'rulebook')
 
     if (!canAccessView) {
       navigate(roleHomePath, { replace: true })
@@ -654,12 +655,12 @@ export function App() {
         setImageAuditResult(
           submission.imageAuditData
             ? {
-                ...submission.imageAuditData,
-                auditReceiptId: submission.imageAuditReceiptId ?? undefined,
-                asset: submission.imageUrl && submission.imagePublicId
-                  ? { secureUrl: submission.imageUrl, publicId: submission.imagePublicId }
-                  : submission.imageAuditData.asset,
-              }
+              ...submission.imageAuditData,
+              auditReceiptId: submission.imageAuditReceiptId ?? undefined,
+              asset: submission.imageUrl && submission.imagePublicId
+                ? { secureUrl: submission.imageUrl, publicId: submission.imagePublicId }
+                : submission.imageAuditData.asset,
+            }
             : null,
         )
         setImagePreviewUrl(
@@ -758,9 +759,9 @@ export function App() {
       if (!response.ok) {
         const message =
           typeof data === 'object' &&
-          data !== null &&
-          'error' in data &&
-          typeof (data as { error: unknown }).error === 'string'
+            data !== null &&
+            'error' in data &&
+            typeof (data as { error: unknown }).error === 'string'
             ? (data as { error: string }).error
             : `Server returned HTTP ${response.status}`
         throw new Error(message)
@@ -819,9 +820,9 @@ export function App() {
       if (!response.ok) {
         const message =
           typeof data === 'object' &&
-          data !== null &&
-          'error' in data &&
-          typeof data.error === 'string'
+            data !== null &&
+            'error' in data &&
+            typeof data.error === 'string'
             ? data.error
             : `Image audit failed with HTTP ${response.status}`
 
@@ -1125,11 +1126,11 @@ export function App() {
       setLoginPassword('')
       navigate(
         ROUTE_BY_VIEW[
-          data.user.role === 'CREATOR'
-            ? 'workspace'
-            : data.user.role === 'REVIEWER'
-              ? 'review'
-              : 'manager'
+        data.user.role === 'CREATOR'
+          ? 'workspace'
+          : data.user.role === 'REVIEWER'
+            ? 'review'
+            : 'manager'
         ],
         { replace: true },
       )
@@ -1206,20 +1207,37 @@ export function App() {
   }
 
   if (!authSession) {
+    if (routePath !== '/login') {
+      return (
+        <LandingPage
+          onNavigateLogin={() => navigate('/login')}
+          onDemoLogin={(role) => void handleDemoLogin(role)}
+          demoBusyRole={demoLoginBusyRole}
+        />
+      )
+    }
+
     return (
       <div className="bf-auth-screen">
-        <form className="bf-auth-card" onSubmit={handleLogin}>
+        <form className="bf-auth-card glass-panel" onSubmit={handleLogin}>
+          <button
+            type="button"
+            className="bs-auth-back-btn"
+            onClick={() => navigate('/')}
+          >
+            ← Back to Brand Shield AI
+          </button>
           <BrandFlightLogo variant="auth" />
-          <h1 className="bf-auth-title">Welcome back</h1>
+          <h1 className="bf-auth-title">Welcome to Brand Shield AI</h1>
           <p className="bf-auth-subtitle">
-            Sign in to review campaign content against your brand rules.
+            Sign in to govern campaign content against brand rules and compliance policies.
           </p>
 
           {DEMO_ACCESS_ENABLED && (
             <section className="bf-demo-access" aria-labelledby="bf-demo-access-title">
               <div className="bf-demo-access-heading">
-                <h2 id="bf-demo-access-title">Explore the demo</h2>
-                <p>Choose a role to enter directly. No password required.</p>
+                <h2 id="bf-demo-access-title">Explore the Live Demo</h2>
+                <p>Choose an enterprise role to enter directly. No credentials required.</p>
               </div>
               <div className="bf-demo-role-grid">
                 <button
@@ -1265,43 +1283,43 @@ export function App() {
           <details className="bf-auth-credentials" open={!DEMO_ACCESS_ENABLED}>
             <summary>Sign in with an account</summary>
             <div className="bf-auth-credential-fields">
-          <label className="bf-auth-label" htmlFor="login-email">
-            Email
-          </label>
-          <input
-            id="login-email"
-            className="bf-auth-input"
-            type="email"
-            autoComplete="username"
-            value={loginEmail}
-            onChange={(event) => setLoginEmail(event.target.value)}
-            required
-          />
+              <label className="bf-auth-label" htmlFor="login-email">
+                Email
+              </label>
+              <input
+                id="login-email"
+                className="bf-auth-input"
+                type="email"
+                autoComplete="username"
+                value={loginEmail}
+                onChange={(event) => setLoginEmail(event.target.value)}
+                required
+              />
 
-          <label className="bf-auth-label" htmlFor="login-password">
-            Password
-          </label>
-          <input
-            id="login-password"
-            className="bf-auth-input"
-            type="password"
-            autoComplete="current-password"
-            value={loginPassword}
-            onChange={(event) => setLoginPassword(event.target.value)}
-            required
-          />
+              <label className="bf-auth-label" htmlFor="login-password">
+                Password
+              </label>
+              <input
+                id="login-password"
+                className="bf-auth-input"
+                type="password"
+                autoComplete="current-password"
+                value={loginPassword}
+                onChange={(event) => setLoginPassword(event.target.value)}
+                required
+              />
 
-          <button
-            className="bf-auth-submit"
-            type="submit"
-            disabled={loginBusy || demoLoginBusyRole !== null}
-          >
-            {loginBusy ? 'Signing in…' : 'Sign in'}
-          </button>
+              <button
+                className="bf-auth-submit"
+                type="submit"
+                disabled={loginBusy || demoLoginBusyRole !== null}
+              >
+                {loginBusy ? 'Signing in…' : 'Sign in'}
+              </button>
 
-          <p className="bf-auth-footnote">
-            Use the credentials provided for your BrandFlight account.
-          </p>
+              <p className="bf-auth-footnote">
+                Use the credentials provided for your Brand Shield AI account.
+              </p>
             </div>
           </details>
         </form>
@@ -1402,12 +1420,12 @@ export function App() {
           imageAuditReceiptId: hasFreshImageAudit ? imageAuditResult?.auditReceiptId ?? null : null,
           ...(imageAuditResult
             ? {
-                imageName: imageAuditResult.image.name,
-                imageAltText: imageAltText.trim() || null,
-                imageAuditData: hasFreshImageAudit ? imageAuditSnapshot(imageAuditResult) : null,
-                imageUrl: imageAuditResult.asset?.secureUrl ?? null,
-                imagePublicId: imageAuditResult.asset?.publicId ?? null,
-              }
+              imageName: imageAuditResult.image.name,
+              imageAltText: imageAltText.trim() || null,
+              imageAuditData: hasFreshImageAudit ? imageAuditSnapshot(imageAuditResult) : null,
+              imageUrl: imageAuditResult.asset?.secureUrl ?? null,
+              imagePublicId: imageAuditResult.asset?.publicId ?? null,
+            }
             : {}),
         }),
       })
@@ -1510,16 +1528,16 @@ export function App() {
     )
     setImageAuditResult(submission.imageAuditData
       ? {
-          ...submission.imageAuditData,
-          auditReceiptId: submission.imageAuditReceiptId ?? undefined,
-          asset: submission.imageUrl && submission.imagePublicId
-            ? { secureUrl: submission.imageUrl, publicId: submission.imagePublicId }
-            : submission.imageAuditData.asset,
-        }
+        ...submission.imageAuditData,
+        auditReceiptId: submission.imageAuditReceiptId ?? undefined,
+        asset: submission.imageUrl && submission.imagePublicId
+          ? { secureUrl: submission.imageUrl, publicId: submission.imagePublicId }
+          : submission.imageAuditData.asset,
+      }
       : null)
-        setImagePreviewUrl(
-          submission.imageUrl ?? submission.imageAuditData?.asset?.secureUrl ?? null,
-        )
+    setImagePreviewUrl(
+      submission.imageUrl ?? submission.imageAuditData?.asset?.secureUrl ?? null,
+    )
     setImageAuditError(null)
     setCategoryFilter('ALL')
     setAuditError(null)
@@ -1567,7 +1585,7 @@ export function App() {
           <BrandFlightLogo variant="auth" />
           <h1 className="bf-auth-title">Page not found</h1>
           <p className="bf-auth-subtitle">
-            This BrandFlight URL does not match a known feature.
+            This Brand Shield AI URL does not match a known feature.
           </p>
           <button
             className="bf-auth-submit"
@@ -1750,19 +1768,18 @@ export function App() {
 
               {activeView === 'workspace' && !routeSubmissionId && !editingSubmissionId && (
                 <div className="bf-scenario-picker">
-                <span className="bf-scenario-label">Sample drafts:</span>
-                {SAMPLE_DRAFTS.map((sample) => (
-                  <button
-                    key={sample.id}
-                    type="button"
-                    className={`bf-scenario-btn ${
-                      selectedSampleId === sample.id ? 'active' : ''
-                    }`}
-                    onClick={() => handleSelectScenario(sample)}
-                  >
-                    {sample.label}
-                  </button>
-                ))}
+                  <span className="bf-scenario-label">Sample drafts:</span>
+                  {SAMPLE_DRAFTS.map((sample) => (
+                    <button
+                      key={sample.id}
+                      type="button"
+                      className={`bf-scenario-btn ${selectedSampleId === sample.id ? 'active' : ''
+                        }`}
+                      onClick={() => handleSelectScenario(sample)}
+                    >
+                      {sample.label}
+                    </button>
+                  ))}
                 </div>
               )}
             </section>
@@ -1832,586 +1849,585 @@ export function App() {
               {/* LEFT STICKY PANE: Editor + Compact Reference */}
               <div className="bf-left-sticky">
                 {activeView === 'workspace' && (
-                <form className="bf-card" onSubmit={handleAuditSubmit}>
-                  <div className="bf-card-header">
-                    <h2 className="bf-section-title">Draft Content</h2>
-                    <span className="bf-section-meta">
-                      {content.trim() ? content.trim().split(/\s+/).length : 0} words
-                    </span>
-                  </div>
-
-                  <div className="bf-card-body">
-                    <div className="bf-field-row">
-                      <div className="bf-field">
-                        <label className="bf-label" htmlFor="bf-title-input">
-                          Campaign title
-                        </label>
-                        <input
-                          id="bf-title-input"
-                          type="text"
-                          className="bf-input"
-                          value={draftTitle}
-                          onChange={(e) => setDraftTitle(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="bf-field">
-                        <label className="bf-label" htmlFor="bf-channel-input">
-                          Channel
-                        </label>
-                        <input
-                          id="bf-channel-input"
-                          type="text"
-                          className="bf-input"
-                          value={draftChannel}
-                          onChange={(e) => setDraftChannel(e.target.value)}
-                        />
-                      </div>
+                  <form className="bf-card" onSubmit={handleAuditSubmit}>
+                    <div className="bf-card-header">
+                      <h2 className="bf-section-title">Draft Content</h2>
+                      <span className="bf-section-meta">
+                        {content.trim() ? content.trim().split(/\s+/).length : 0} words
+                      </span>
                     </div>
 
-                    <div className="bf-field">
-                      <div className="bf-field-top">
-                        <label className="bf-label" htmlFor="bf-editor-input">
-                          Copy to evaluate
-                        </label>
-                        <div className="bf-editor-meta">
-                          <span className="bf-counter">{content.length} characters</span>
-                          <span
-                            className="bf-privacy-inline"
-                            title="Recognizable email, UPI, Indian phone, Aadhaar-shaped, PAN-shaped and Luhn-valid card patterns are temporarily masked before Gemini text processing. Detection is pattern-based and may miss other personal information."
-                          >
-                            <span aria-hidden="true">✓</span>
-                            PII masking on
-                          </span>
+                    <div className="bf-card-body">
+                      <div className="bf-field-row">
+                        <div className="bf-field">
+                          <label className="bf-label" htmlFor="bf-title-input">
+                            Campaign title
+                          </label>
+                          <input
+                            id="bf-title-input"
+                            type="text"
+                            className="bf-input"
+                            value={draftTitle}
+                            onChange={(e) => setDraftTitle(e.target.value)}
+                          />
                         </div>
-                      </div>
-                      <textarea
-                        id="bf-editor-input"
-                        className="bf-textarea"
-                        value={content}
-                        disabled={refineBusy}
-                        onChange={(e) => {
-                          setContent(e.target.value)
-                          setGuidanceCopyFeedback(null)
-                        }}
-                        placeholder="Paste or write marketing content to check against brand guidelines..."
-                      />
-                      {refineBusy && (
-                        <div className="bf-refine-progress" role="status" aria-live="polite">
-                          <span className="bf-refine-progress-mark" aria-hidden="true">✦</span>
-                          <div className="bf-refine-progress-copy">
-                            <strong>Refining your campaign copy</strong>
-                            <p>Checking the wording against your brand voice, rules and approved facts.</p>
-                          </div>
-                          <span className="bf-refine-progress-orbit" aria-hidden="true" />
-                          <span className="bf-refine-progress-track" aria-hidden="true"><i /></span>
-                        </div>
-                      )}
-                    </div>
-
-                    {activeEvidences.length > 0 && (
-                      <div className="bf-field">
-                        <div className="bf-field-top">
-                          <span className="bf-label">
-                            Highlighted spans ({activeEvidences.length} flagged)
-                          </span>
-                          <button
-                            type="button"
-                            className="bf-btn-text"
-                            onClick={() => setShowInlineMap((prev) => !prev)}
-                          >
-                            {showInlineMap ? 'Hide preview' : 'Show preview'}
-                          </button>
-                        </div>
-                        {showInlineMap && (
-                          <div className="bf-evidence-preview">
-                            {renderHighlightedText(content, activeEvidences)}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="bf-editor-actions">
-                      <button
-                        type="button"
-                        className="bf-btn-secondary"
-                        disabled={isAuditing}
-                        onClick={() => {
-                          const sample =
-                            SAMPLE_DRAFTS.find((s) => s.id === selectedSampleId) ?? SAMPLE_DRAFTS[0]
-                          setEditingSubmissionId(null)
-                          lastSavedDraftKeyRef.current = null
-                          setSaveDraftError(null)
-                          setSaveDraftMessage(null)
-                          setDraftTitle(sample.title)
-                          setDraftChannel(sample.channel)
-                          setContent(sample.content)
-                        }}
-                      >
-                        Reset draft
-                      </button>
-
-                      <button
-                        type="button"
-                        className="bf-btn-secondary"
-                        onClick={handleSaveDraft}
-                        disabled={
-                          saveDraftBusy ||
-                          isAuditing ||
-                          refineBusy ||
-                          !content.trim() ||
-                          !auditResult ||
-                          auditedContent !== content ||
-                          authSession?.user.role !== 'CREATOR'
-                        }
-                      >
-                        {saveDraftBusy ? 'Saving…' : 'Save Draft'}
-                      </button>
-
-                      {auditResult &&
-                        !auditRestoredFromSubmission &&
-                        auditedContent === content &&
-                        auditResult.findings.some((finding) =>
-                          ['TONE', 'TERMINOLOGY', 'CLAIM'].includes(finding.category) &&
-                          (finding.severity === 'WARNING' || finding.severity === 'ERROR'),
-                        ) && (
-                          <button
-                            type="button"
-                            className="bf-btn-secondary bf-refine-copy-button"
-                            disabled={refineBusy || isAuditing || !content.trim() || authSession?.user.role !== 'CREATOR'}
-                            onClick={() => void handleRefineCopy()}
-                            title="Refine copy because the latest preflight audit found text warnings or errors."
-                          >
-                            <span className="bf-refine-button-spark" aria-hidden="true">✦</span>
-                            {refineBusy ? 'Refining…' : 'Refine copy'}
-                          </button>
-                        )}
-
-                      <button
-                        type="submit"
-                        className="bf-btn-primary"
-                        disabled={isAuditing || refineBusy || !content.trim()}
-                      >
-                        {isAuditing ? 'Running audit...' : 'Run Preflight Audit'}
-                      </button>
-                    </div>
-
-                    {refineError && <p className="bf-refine-copy-note error" role="alert">{refineError}</p>}
-                    {refineMessage && <p className="bf-refine-copy-note" role="status">{refineMessage}</p>}
-
-                    {saveDraftError && (
-                      <p className="bf-save-feedback error" role="alert">
-                        {saveDraftError}
-                      </p>
-                    )}
-
-
-                  </div>
-                </form>
-                )}
-
-{activeView === 'image' && (
-                  <>
-                {/* Campaign image and alt-text audit */}
-                <form className="bf-card bf-image-audit-form" onSubmit={handleImageAuditSubmit}>
-                  <div className="bf-card-header">
-                    <div>
-                      <h2 className="bf-section-title">Campaign Image Audit</h2>
-                      <p className="bf-section-meta">PNG or JPEG · maximum 5 MB</p>
-                    </div>
-                  </div>
-
-                  <div className="bf-card-body">
-                    <div className="bf-image-privacy-warning" role="note">
-                      <strong>Image privacy check required</strong>
-                      <p>
-                        Image pixels and embedded text are not PII-masked in this release. Running Image Audit uploads the image to Cloudinary and may send it to Gemini for visual checks. Redact personal or confidential details in the image before proceeding.
-                      </p>
-                      <label className="bf-image-privacy-confirm">
-                        <input
-                          type="checkbox"
-                          checked={imagePrivacyAcknowledged}
-                          disabled={isImageAuditing}
-                          required
-                          onChange={(event) => setImagePrivacyAcknowledged(event.target.checked)}
-                        />
-                        <span>I confirm this image contains no unredacted personal or confidential information.</span>
-                      </label>
-                    </div>
-                    <div className="bf-field">
-                      <label className="bf-label" htmlFor="bf-image-file">
-                        Campaign image
-                      </label>
-                      <input
-                        id="bf-image-file"
-                        className="bf-image-file-input"
-                        type="file"
-                        disabled={isImageAuditing}
-                        accept="image/png,image/jpeg,.png,.jpg,.jpeg"
-                        aria-label="Choose a campaign image"
-                        onChange={(event) => {
-                          const selectedFile = event.currentTarget.files?.[0] ?? null
-                          setImageFile(selectedFile)
-                          setImagePrivacyAcknowledged(false)
-                          setImageAuditResult(null)
-                          setAuditedImageAltText(null)
-                          setImageAuditError(null)
-
-                          if (imageObjectUrlRef.current) {
-                            URL.revokeObjectURL(imageObjectUrlRef.current)
-                            imageObjectUrlRef.current = null
-                          }
-
-                          if (selectedFile) {
-                            const url = URL.createObjectURL(selectedFile)
-                            imageObjectUrlRef.current = url
-                            setImagePreviewUrl(url)
-                          } else {
-                            setImagePreviewUrl(null)
-                          }
-                        }}
-                      />
-                      <label
-                        htmlFor="bf-image-file"
-                        className={`bf-image-preview-bar${imagePreviewUrl ? ' has-image' : ''}`}
-                        tabIndex={0}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault()
-                            document.getElementById('bf-image-file')?.click()
-                          }
-                        }}
-                      >
-                        {imagePreviewUrl ? (
-                          <>
-                            <img
-                              className="bf-image-preview-thumb"
-                              src={imagePreviewUrl}
-                              alt={imageAltText.trim() || imageAuditResult?.image.name || 'Campaign image preview'}
-                            />
-                            <span className="bf-image-preview-details">
-                              <span className="bf-image-preview-eyebrow">
-                                {imageFile ? 'NEW IMAGE SELECTED' : 'SAVED CAMPAIGN IMAGE'}
-                              </span>
-                              <strong className="bf-image-preview-name">
-                                {imageFile?.name || imageAuditResult?.image.name || 'Campaign image'}
-                              </strong>
-                              <span className="bf-image-preview-help">
-                                {imageFile
-                                  ? `${(imageFile.size / (1024 * 1024)).toFixed(2)} MB · Audit again before saving`
-                                  : canReauditSavedImage
-                                    ? 'Saved image · Edit alt text and re-audit without re-uploading'
-                                    : 'Saved image · Click to replace'}
-                              </span>
-                            </span>
-                            <span className="bf-image-change-pill">Change image</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="bf-image-upload-mark" aria-hidden="true">↥</span>
-                            <span className="bf-image-preview-details">
-                              <strong className="bf-image-preview-name">Add a campaign image</strong>
-                              <span className="bf-image-preview-help">PNG or JPEG · Up to 5 MB</span>
-                            </span>
-                            <span className="bf-image-change-pill">Browse files</span>
-                          </>
-                        )}
-                      </label>
-                      <p className="bf-section-meta">
-                        Click the preview to replace the image. For a saved draft, you can edit only the alt text and re-run the audit using the saved image; a replacement image must still be uploaded.
-                      </p>
-                    </div>
-
-                    <div className="bf-field">
-                      <label className="bf-label" htmlFor="bf-image-alt-text">
-                        Image alt text
-                      </label>
-                      <textarea
-                        id="bf-image-alt-text"
-                        className="bf-textarea"
-                        rows={3}
-                        value={imageAltText}
-                        disabled={isImageAuditing}
-                        onChange={(event) => setImageAltText(event.target.value)}
-                        placeholder="Describe the meaningful content of the campaign image..."
-                      />
-                      <p className="bf-section-meta">
-                        Leave empty to test missing-alt-text detection.
-                      </p>
-                    </div>
-
-                    <div className="bf-editor-actions bf-image-editor-actions">
-                      <button
-                        type="submit"
-                        className="bf-btn-primary"
-                        disabled={isImageAuditing || (!imageFile && !canReauditSavedImage)}
-                      >
-                        {isImageAuditing
-                          ? 'Auditing image…'
-                          : canReauditSavedImage
-                            ? 'Re-audit Saved Image & Alt Text'
-                            : 'Audit Image & Alt Text'}
-                      </button>
-                      <button
-                        type="button"
-                        className="bf-btn-secondary"
-                        onClick={handleSaveDraft}
-                        disabled={saveDraftBusy || isAuditing || isImageAuditing || authSession.user.role !== 'CREATOR'}
-                      >
-                        {saveDraftBusy ? 'Saving…' : 'Save Campaign Draft'}
-                      </button>
-                    </div>
-                    <p className="bf-section-meta bf-image-save-help">
-                      Save work in progress at any time. Run fresh Preflight and Image Audits before submitting for review. A newly selected image must be uploaded through Image Audit before it can be attached.
-                    </p>
-                    {saveDraftError && (
-                      <p className="bf-save-feedback error" role="alert">{saveDraftError}</p>
-                    )}
-
-
-                    {!isImageAuditing && !imageAuditError && !imageAuditResult && (
-                      <div className="bf-audit-empty-banner" role="status">
-                        <span className="bf-audit-empty-icon" aria-hidden="true">▧</span>
-                        <div className="bf-audit-empty-copy">
-                          <strong>Ready to inspect your campaign image</strong>
-                          <p>
-                            {imageFile
-                              ? 'Click Audit Image & Alt Text to check palette alignment and accessibility.'
-                              : canReauditSavedImage
-                                ? 'Update the alt text, then re-run the audit. BrandFlight will reuse the image already saved with this draft.'
-                                : 'Choose a PNG or JPEG image, add meaningful alt text, then click Audit Image & Alt Text. Results will appear here.'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {isImageAuditing && (
-                      <div className="bf-status-banner info" role="status">
-                        <div className="bf-banner-body">
-                          <div className="bf-banner-heading">Processing campaign image…</div>
-                          <div>Extracting dominant colors and checking alternative text.</div>
-                        </div>
-                      </div>
-                    )}
-
-                    {imageAuditError && (
-                      <div className="bf-status-banner error" role="alert">
-                        <div className="bf-banner-body">
-                          <div className="bf-banner-heading">Image audit failed</div>
-                          <div>{imageAuditError}</div>
-                        </div>
-                      </div>
-                    )}
-
-                    {imageAuditResult && (
-                      <div className="bf-image-audit-results">
-                        <div
-                          className={`bf-status-banner ${
-                            imageAuditResult.totalFindings > 0 ? 'warn' : 'success'
-                          }`}
-                          role="status"
-                        >
-                          <div className="bf-banner-body">
-                            <div className="bf-banner-heading">
-                              {!imageAuditResult.image.colorAnalysis
-                                ? 'Saved image audit restored — re-run to compare each dominant color'
-                                : imageAuditResult.totalFindings === 0
-                                  ? 'Image checks completed — no configured issues found'
-                                  : `Review ${imageAuditResult.totalFindings} image finding(s)`}
-                            </div>
-                            <div>
-                              {imageAuditResult.image.name}
-                              {imageAuditResult.image.width && imageAuditResult.image.height
-                                ? ` · ${imageAuditResult.image.width} × ${imageAuditResult.image.height}px`
-                                : ''}
-                              {' · '}Alt text: {imageAuditResult.image.altTextLength} characters
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="bf-image-audit-metrics" aria-label="Image audit summary">
-                          <div className="bf-image-audit-metric">
-                            <span>Palette check</span>
-                            <strong className={imageAuditResult.image.approvedColors.length === 0 ? 'needs-review' : imageAuditResult.image.colorAnalysis?.some((item) => !item.matchesPalette) ? 'needs-review' : imageAuditResult.image.colorAnalysis ? 'passed' : 'needs-review'}>
-                              {imageAuditResult.image.approvedColors.length === 0
-                                ? 'Not configured'
-                                : !imageAuditResult.image.colorAnalysis
-                                  ? 'Re-audit needed'
-                                  : imageAuditResult.image.colorAnalysis.some((item) => !item.matchesPalette)
-                                    ? 'Review colors'
-                                    : 'Within tolerance'}
-                            </strong>
-                            <small>
-                              {imageAuditResult.image.colorAnalysis
-                                ? `${imageAuditResult.image.colorAnalysis.filter((item) => item.matchesPalette).length} of ${imageAuditResult.image.colorAnalysis.length} dominant colors matched`
-                                : 'Per-color results require a fresh audit'}
-                            </small>
-                          </div>
-                          <div className="bf-image-audit-metric">
-                            <span>Alt-text check</span>
-                            <strong className={imageAuditResult.findings.some((finding) => finding.title.toLowerCase().includes('alt text')) ? 'needs-review' : 'passed'}>
-                              {imageAuditResult.findings.some((finding) => finding.title.toLowerCase().includes('alt text')) ? 'Needs review' : 'Basic checks passed'}
-                            </strong>
-                            <small>Presence, configured length and generic-label checks; contrast results are reported separately below.</small>
-                          </div>
-                          <div className="bf-image-audit-metric">
-                            <span>Findings</span>
-                            <strong className={imageAuditResult.totalFindings > 0 ? 'needs-review' : 'passed'}>{imageAuditResult.totalFindings}</strong>
-                            <small>Rule-based checks only; not a full WCAG or image-understanding audit</small>
-                          </div>
-                        </div>
-
-                        {imageAuditResult.logoVerification && (
-                          <section className={`bf-logo-verification-card outcome-${imageAuditResult.logoVerification.outcome.toLowerCase()}`} aria-label="Brand logo verification">
-                            <div className="bf-logo-verification-heading">
-                              <div><span className="bf-logo-verification-eyebrow">OFFICIAL BRAND ASSET</span><h3>Logo verification</h3></div>
-                              <span className={`bf-logo-verification-badge outcome-${imageAuditResult.logoVerification.outcome.toLowerCase()}`}>
-                                {imageAuditResult.logoVerification.outcome === 'NOT_CONFIGURED' ? 'Not configured' : imageAuditResult.logoVerification.outcome.replace(/_/g, ' ')}
-                              </span>
-                            </div>
-                            {imageAuditResult.logoVerification.referenceLogo && (
-                              <div className="bf-logo-reference-row">
-                                <img src={imageAuditResult.logoVerification.referenceLogo.secureUrl} alt={`Approved reference: ${imageAuditResult.logoVerification.referenceLogo.name}`} />
-                                <div><strong>{imageAuditResult.logoVerification.referenceLogo.name}</strong><p>{imageAuditResult.logoVerification.referenceLogo.expectedWordmark ? `Expected wordmark: ${imageAuditResult.logoVerification.referenceLogo.expectedWordmark}` : 'No expected wordmark configured'}</p><small>{imageAuditResult.logoVerification.required ? 'Logo required' : 'Logo optional'} · {imageAuditResult.logoVerification.confidence.toLowerCase()} confidence</small></div>
-                              </div>
-                            )}
-                            <p className="bf-logo-verification-summary">{imageAuditResult.logoVerification.summary}</p>
-                            <div className="bf-logo-check-grid">
-                              <span><small>Logo detected</small><strong>{imageAuditResult.logoVerification.outcome === 'NOT_CONFIGURED' ? 'Not checked' : imageAuditResult.logoVerification.outcome === 'NEEDS_REVIEW' ? 'Needs review' : imageAuditResult.logoVerification.logoDetected ? 'Yes' : 'No'}</strong></span>
-                              <span><small>Wordmark</small><strong>{imageAuditResult.logoVerification.wordmarkStatus.replace(/_/g, ' ')}</strong></span>
-                              <span><small>Logo colors</small><strong>{imageAuditResult.logoVerification.colorStatus.replace(/_/g, ' ')}</strong></span>
-                              <span><small>Integrity</small><strong>{imageAuditResult.logoVerification.integrityStatus.replace(/_/g, ' ')}</strong></span>
-                            </div>
-                            {imageAuditResult.logoVerification.evidence.length > 0 && <ul className="bf-logo-verification-list">{imageAuditResult.logoVerification.evidence.map((item, index) => <li key={`logo-evidence-${index}`}>{item}</li>)}</ul>}
-                            {imageAuditResult.logoVerification.suggestions.length > 0 && <ul className="bf-logo-verification-list suggestions">{imageAuditResult.logoVerification.suggestions.map((item, index) => <li key={`logo-suggestion-${index}`}>{item}</li>)}</ul>}
-                          </section>
-                        )}
-
-                        <ImageTextContrastReport analysis={imageAuditResult.image.textContrastAnalysis} />
 
                         <div className="bf-field">
-                          <span className="bf-label">Dominant colors compared with the approved palette</span>
-                          <p className="bf-image-audit-help">The five most common extracted colors are compared with the nearest approved brand color. A match means RGB distance is within the current tolerance; it does not prove overall brand compliance.</p>
-                          {imageAuditResult.image.colorAnalysis ? (
-                            <div className="bf-color-audit-list">
-                              {imageAuditResult.image.colorAnalysis.map((item) => (
-                                <div className={`bf-color-audit-item ${!item.nearestApprovedColor ? 'is-no-palette' : item.matchesPalette ? 'is-match' : 'is-off-palette'}`} key={item.color}>
-                                  <span className="bf-swatch-color" style={{ backgroundColor: item.color }} />
-                                  <div className="bf-color-audit-copy">
-                                    <strong>{item.color}</strong>
-                                    <span>{!item.nearestApprovedColor ? 'No approved palette configured' : item.matchesPalette ? 'Within palette tolerance' : 'Outside palette tolerance'}</span>
-                                  </div>
-                                  <div className="bf-color-audit-nearest">
-                                    <small>Nearest approved</small>
-                                    <strong>{item.nearestApprovedColor ?? 'No palette'}</strong>
-                                    {item.distance !== null && <small>RGB distance: {item.distance}</small>}
-                                  </div>
-                                </div>
-                              ))}
+                          <label className="bf-label" htmlFor="bf-channel-input">
+                            Channel
+                          </label>
+                          <input
+                            id="bf-channel-input"
+                            type="text"
+                            className="bf-input"
+                            value={draftChannel}
+                            onChange={(e) => setDraftChannel(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="bf-field">
+                        <div className="bf-field-top">
+                          <label className="bf-label" htmlFor="bf-editor-input">
+                            Copy to evaluate
+                          </label>
+                          <div className="bf-editor-meta">
+                            <span className="bf-counter">{content.length} characters</span>
+                            <span
+                              className="bf-privacy-inline"
+                              title="Recognizable email, UPI, Indian phone, Aadhaar-shaped, PAN-shaped and Luhn-valid card patterns are temporarily masked before Gemini text processing. Detection is pattern-based and may miss other personal information."
+                            >
+                              <span aria-hidden="true">✓</span>
+                              PII masking on
+                            </span>
+                          </div>
+                        </div>
+                        <textarea
+                          id="bf-editor-input"
+                          className="bf-textarea"
+                          value={content}
+                          disabled={refineBusy}
+                          onChange={(e) => {
+                            setContent(e.target.value)
+                            setGuidanceCopyFeedback(null)
+                          }}
+                          placeholder="Paste or write marketing content to check against brand guidelines..."
+                        />
+                        {refineBusy && (
+                          <div className="bf-refine-progress" role="status" aria-live="polite">
+                            <span className="bf-refine-progress-mark" aria-hidden="true">✦</span>
+                            <div className="bf-refine-progress-copy">
+                              <strong>Refining your campaign copy</strong>
+                              <p>Checking the wording against your brand voice, rules and approved facts.</p>
                             </div>
-                          ) : (
-                            <div className="bf-image-audit-legacy-note" role="status">
-                              This is a previously saved audit without per-color comparison results. Run Image Audit again to evaluate each dominant color.
-                              <div className="bf-swatch-list" style={{ marginTop: '8px' }}>
-                                {imageAuditResult.image.dominantColors.map((color) => (
-                                  <div className="bf-swatch-item" key={color}>
-                                    <span className="bf-swatch-color" style={{ backgroundColor: color }} />
-                                    <code>{color}</code>
-                                  </div>
-                                ))}
-                              </div>
+                            <span className="bf-refine-progress-orbit" aria-hidden="true" />
+                            <span className="bf-refine-progress-track" aria-hidden="true"><i /></span>
+                          </div>
+                        )}
+                      </div>
+
+                      {activeEvidences.length > 0 && (
+                        <div className="bf-field">
+                          <div className="bf-field-top">
+                            <span className="bf-label">
+                              Highlighted spans ({activeEvidences.length} flagged)
+                            </span>
+                            <button
+                              type="button"
+                              className="bf-btn-text"
+                              onClick={() => setShowInlineMap((prev) => !prev)}
+                            >
+                              {showInlineMap ? 'Hide preview' : 'Show preview'}
+                            </button>
+                          </div>
+                          {showInlineMap && (
+                            <div className="bf-evidence-preview">
+                              {renderHighlightedText(content, activeEvidences)}
                             </div>
                           )}
                         </div>
+                      )}
 
+                      <div className="bf-editor-actions">
+                        <button
+                          type="button"
+                          className="bf-btn-secondary"
+                          disabled={isAuditing}
+                          onClick={() => {
+                            const sample =
+                              SAMPLE_DRAFTS.find((s) => s.id === selectedSampleId) ?? SAMPLE_DRAFTS[0]
+                            setEditingSubmissionId(null)
+                            lastSavedDraftKeyRef.current = null
+                            setSaveDraftError(null)
+                            setSaveDraftMessage(null)
+                            setDraftTitle(sample.title)
+                            setDraftChannel(sample.channel)
+                            setContent(sample.content)
+                          }}
+                        >
+                          Reset draft
+                        </button>
+
+                        <button
+                          type="button"
+                          className="bf-btn-secondary"
+                          onClick={handleSaveDraft}
+                          disabled={
+                            saveDraftBusy ||
+                            isAuditing ||
+                            refineBusy ||
+                            !content.trim() ||
+                            !auditResult ||
+                            auditedContent !== content ||
+                            authSession?.user.role !== 'CREATOR'
+                          }
+                        >
+                          {saveDraftBusy ? 'Saving…' : 'Save Draft'}
+                        </button>
+
+                        {auditResult &&
+                          !auditRestoredFromSubmission &&
+                          auditedContent === content &&
+                          auditResult.findings.some((finding) =>
+                            ['TONE', 'TERMINOLOGY', 'CLAIM'].includes(finding.category) &&
+                            (finding.severity === 'WARNING' || finding.severity === 'ERROR'),
+                          ) && (
+                            <button
+                              type="button"
+                              className="bf-btn-secondary bf-refine-copy-button"
+                              disabled={refineBusy || isAuditing || !content.trim() || authSession?.user.role !== 'CREATOR'}
+                              onClick={() => void handleRefineCopy()}
+                              title="Refine copy because the latest preflight audit found text warnings or errors."
+                            >
+                              <span className="bf-refine-button-spark" aria-hidden="true">✦</span>
+                              {refineBusy ? 'Refining…' : 'Refine copy'}
+                            </button>
+                          )}
+
+                        <button
+                          type="submit"
+                          className="bf-btn-primary"
+                          disabled={isAuditing || refineBusy || !content.trim()}
+                        >
+                          {isAuditing ? 'Running audit...' : 'Run Preflight Audit'}
+                        </button>
+                      </div>
+
+                      {refineError && <p className="bf-refine-copy-note error" role="alert">{refineError}</p>}
+                      {refineMessage && <p className="bf-refine-copy-note" role="status">{refineMessage}</p>}
+
+                      {saveDraftError && (
+                        <p className="bf-save-feedback error" role="alert">
+                          {saveDraftError}
+                        </p>
+                      )}
+
+
+                    </div>
+                  </form>
+                )}
+
+                {activeView === 'image' && (
+                  <>
+                    {/* Campaign image and alt-text audit */}
+                    <form className="bf-card bf-image-audit-form" onSubmit={handleImageAuditSubmit}>
+                      <div className="bf-card-header">
+                        <div>
+                          <h2 className="bf-section-title">Campaign Image Audit</h2>
+                          <p className="bf-section-meta">PNG or JPEG · maximum 5 MB</p>
+                        </div>
+                      </div>
+
+                      <div className="bf-card-body">
+                        <div className="bf-image-privacy-warning" role="note">
+                          <strong>Image privacy check required</strong>
+                          <p>
+                            Image pixels and embedded text are not PII-masked in this release. Running Image Audit uploads the image to Cloudinary and may send it to Gemini for visual checks. Redact personal or confidential details in the image before proceeding.
+                          </p>
+                          <label className="bf-image-privacy-confirm">
+                            <input
+                              type="checkbox"
+                              checked={imagePrivacyAcknowledged}
+                              disabled={isImageAuditing}
+                              required
+                              onChange={(event) => setImagePrivacyAcknowledged(event.target.checked)}
+                            />
+                            <span>I confirm this image contains no unredacted personal or confidential information.</span>
+                          </label>
+                        </div>
                         <div className="bf-field">
-                          <span className="bf-label">Approved brand palette</span>
-                          <div className="bf-swatch-list" style={{ marginTop: '8px' }}>
-                            {imageAuditResult.image.approvedColors.length > 0 ? (
-                              imageAuditResult.image.approvedColors.map((color) => (
-                                <div className="bf-swatch-item" key={color}>
-                                  <span
-                                    className="bf-swatch-color"
-                                    style={{ backgroundColor: color }}
-                                  />
-                                  <code>{color}</code>
-                                </div>
-                              ))
+                          <label className="bf-label" htmlFor="bf-image-file">
+                            Campaign image
+                          </label>
+                          <input
+                            id="bf-image-file"
+                            className="bf-image-file-input"
+                            type="file"
+                            disabled={isImageAuditing}
+                            accept="image/png,image/jpeg,.png,.jpg,.jpeg"
+                            aria-label="Choose a campaign image"
+                            onChange={(event) => {
+                              const selectedFile = event.currentTarget.files?.[0] ?? null
+                              setImageFile(selectedFile)
+                              setImagePrivacyAcknowledged(false)
+                              setImageAuditResult(null)
+                              setAuditedImageAltText(null)
+                              setImageAuditError(null)
+
+                              if (imageObjectUrlRef.current) {
+                                URL.revokeObjectURL(imageObjectUrlRef.current)
+                                imageObjectUrlRef.current = null
+                              }
+
+                              if (selectedFile) {
+                                const url = URL.createObjectURL(selectedFile)
+                                imageObjectUrlRef.current = url
+                                setImagePreviewUrl(url)
+                              } else {
+                                setImagePreviewUrl(null)
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor="bf-image-file"
+                            className={`bf-image-preview-bar${imagePreviewUrl ? ' has-image' : ''}`}
+                            tabIndex={0}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault()
+                                document.getElementById('bf-image-file')?.click()
+                              }
+                            }}
+                          >
+                            {imagePreviewUrl ? (
+                              <>
+                                <img
+                                  className="bf-image-preview-thumb"
+                                  src={imagePreviewUrl}
+                                  alt={imageAltText.trim() || imageAuditResult?.image.name || 'Campaign image preview'}
+                                />
+                                <span className="bf-image-preview-details">
+                                  <span className="bf-image-preview-eyebrow">
+                                    {imageFile ? 'NEW IMAGE SELECTED' : 'SAVED CAMPAIGN IMAGE'}
+                                  </span>
+                                  <strong className="bf-image-preview-name">
+                                    {imageFile?.name || imageAuditResult?.image.name || 'Campaign image'}
+                                  </strong>
+                                  <span className="bf-image-preview-help">
+                                    {imageFile
+                                      ? `${(imageFile.size / (1024 * 1024)).toFixed(2)} MB · Audit again before saving`
+                                      : canReauditSavedImage
+                                        ? 'Saved image · Edit alt text and re-audit without re-uploading'
+                                        : 'Saved image · Click to replace'}
+                                  </span>
+                                </span>
+                                <span className="bf-image-change-pill">Change image</span>
+                              </>
                             ) : (
-                              <span className="bf-section-meta">
-                                No valid approved colors configured.
-                              </span>
+                              <>
+                                <span className="bf-image-upload-mark" aria-hidden="true">↥</span>
+                                <span className="bf-image-preview-details">
+                                  <strong className="bf-image-preview-name">Add a campaign image</strong>
+                                  <span className="bf-image-preview-help">PNG or JPEG · Up to 5 MB</span>
+                                </span>
+                                <span className="bf-image-change-pill">Browse files</span>
+                              </>
                             )}
-                          </div>
+                          </label>
+                          <p className="bf-section-meta">
+                            Click the preview to replace the image. For a saved draft, you can edit only the alt text and re-run the audit using the saved image; a replacement image must still be uploaded.
+                          </p>
                         </div>
 
-                        {imageAuditResult.findings.map((finding, index) => (
-                          <article
-                            className={`bf-finding-card severity-${finding.severity}`}
-                            key={`${finding.ruleCode}-${finding.title}-${index}`}
+                        <div className="bf-field">
+                          <label className="bf-label" htmlFor="bf-image-alt-text">
+                            Image alt text
+                          </label>
+                          <textarea
+                            id="bf-image-alt-text"
+                            className="bf-textarea"
+                            rows={3}
+                            value={imageAltText}
+                            disabled={isImageAuditing}
+                            onChange={(event) => setImageAltText(event.target.value)}
+                            placeholder="Describe the meaningful content of the campaign image..."
+                          />
+                          <p className="bf-section-meta">
+                            Leave empty to test missing-alt-text detection.
+                          </p>
+                        </div>
+
+                        <div className="bf-editor-actions bf-image-editor-actions">
+                          <button
+                            type="submit"
+                            className="bf-btn-primary"
+                            disabled={isImageAuditing || (!imageFile && !canReauditSavedImage)}
                           >
-                            <div className="bf-finding-meta">
-                              <div className="bf-finding-tags">
-                                <span className="bf-rule-tag">{finding.ruleCode}</span>
-                                <span
-                                  className={`bf-severity-indicator bf-severity-${finding.severity}`}
-                                >
-                                  {finding.category} · {finding.severity}
-                                </span>
-                              </div>
-                              <span className="bf-source-meta">{finding.confidence}</span>
+                            {isImageAuditing
+                              ? 'Auditing image…'
+                              : canReauditSavedImage
+                                ? 'Re-audit Saved Image & Alt Text'
+                                : 'Audit Image & Alt Text'}
+                          </button>
+                          <button
+                            type="button"
+                            className="bf-btn-secondary"
+                            onClick={handleSaveDraft}
+                            disabled={saveDraftBusy || isAuditing || isImageAuditing || authSession.user.role !== 'CREATOR'}
+                          >
+                            {saveDraftBusy ? 'Saving…' : 'Save Campaign Draft'}
+                          </button>
+                        </div>
+                        <p className="bf-section-meta bf-image-save-help">
+                          Save work in progress at any time. Run fresh Preflight and Image Audits before submitting for review. A newly selected image must be uploaded through Image Audit before it can be attached.
+                        </p>
+                        {saveDraftError && (
+                          <p className="bf-save-feedback error" role="alert">{saveDraftError}</p>
+                        )}
+
+
+                        {!isImageAuditing && !imageAuditError && !imageAuditResult && (
+                          <div className="bf-audit-empty-banner" role="status">
+                            <span className="bf-audit-empty-icon" aria-hidden="true">▧</span>
+                            <div className="bf-audit-empty-copy">
+                              <strong>Ready to inspect your campaign image</strong>
+                              <p>
+                                {imageFile
+                                  ? 'Click Audit Image & Alt Text to check palette alignment and accessibility.'
+                                  : canReauditSavedImage
+                                    ? 'Update the alt text, then re-run the audit. Brand Shield AI will reuse the image already saved with this draft.'
+                                    : 'Choose a PNG or JPEG image, add meaningful alt text, then click Audit Image & Alt Text. Results will appear here.'}
+                              </p>
                             </div>
-                            <h3 className="bf-finding-title">{finding.title}</h3>
-                            <p className="bf-finding-desc">
-                              {finding.ruleCode === 'ACCESSIBILITY-02'
-                                ? getReadableImageFindingCopy(finding, imageAuditResult.image.textContrastAnalysis).summary
-                                : finding.message}
-                            </p>
-                            <div className="bf-evidence-container">
-                              <div className="bf-evidence-row">
-                                <span className="bf-evidence-label">What we found:</span>
-                                <span>{getReadableImageFindingCopy(finding, imageAuditResult.image.textContrastAnalysis).whatFound}</span>
-                              </div>
-                              <div className="bf-evidence-row">
-                                <span className="bf-evidence-label">What to do:</span>
-                                <span>{getReadableImageFindingCopy(finding, imageAuditResult.image.textContrastAnalysis).whatToDo}</span>
+                          </div>
+                        )}
+
+                        {isImageAuditing && (
+                          <div className="bf-status-banner info" role="status">
+                            <div className="bf-banner-body">
+                              <div className="bf-banner-heading">Processing campaign image…</div>
+                              <div>Extracting dominant colors and checking alternative text.</div>
+                            </div>
+                          </div>
+                        )}
+
+                        {imageAuditError && (
+                          <div className="bf-status-banner error" role="alert">
+                            <div className="bf-banner-body">
+                              <div className="bf-banner-heading">Image audit failed</div>
+                              <div>{imageAuditError}</div>
+                            </div>
+                          </div>
+                        )}
+
+                        {imageAuditResult && (
+                          <div className="bf-image-audit-results">
+                            <div
+                              className={`bf-status-banner ${imageAuditResult.totalFindings > 0 ? 'warn' : 'success'
+                                }`}
+                              role="status"
+                            >
+                              <div className="bf-banner-body">
+                                <div className="bf-banner-heading">
+                                  {!imageAuditResult.image.colorAnalysis
+                                    ? 'Saved image audit restored — re-run to compare each dominant color'
+                                    : imageAuditResult.totalFindings === 0
+                                      ? 'Image checks completed — no configured issues found'
+                                      : `Review ${imageAuditResult.totalFindings} image finding(s)`}
+                                </div>
+                                <div>
+                                  {imageAuditResult.image.name}
+                                  {imageAuditResult.image.width && imageAuditResult.image.height
+                                    ? ` · ${imageAuditResult.image.width} × ${imageAuditResult.image.height}px`
+                                    : ''}
+                                  {' · '}Alt text: {imageAuditResult.image.altTextLength} characters
+                                </div>
                               </div>
                             </div>
-                          </article>
-                        ))}
+
+                            <div className="bf-image-audit-metrics" aria-label="Image audit summary">
+                              <div className="bf-image-audit-metric">
+                                <span>Palette check</span>
+                                <strong className={imageAuditResult.image.approvedColors.length === 0 ? 'needs-review' : imageAuditResult.image.colorAnalysis?.some((item) => !item.matchesPalette) ? 'needs-review' : imageAuditResult.image.colorAnalysis ? 'passed' : 'needs-review'}>
+                                  {imageAuditResult.image.approvedColors.length === 0
+                                    ? 'Not configured'
+                                    : !imageAuditResult.image.colorAnalysis
+                                      ? 'Re-audit needed'
+                                      : imageAuditResult.image.colorAnalysis.some((item) => !item.matchesPalette)
+                                        ? 'Review colors'
+                                        : 'Within tolerance'}
+                                </strong>
+                                <small>
+                                  {imageAuditResult.image.colorAnalysis
+                                    ? `${imageAuditResult.image.colorAnalysis.filter((item) => item.matchesPalette).length} of ${imageAuditResult.image.colorAnalysis.length} dominant colors matched`
+                                    : 'Per-color results require a fresh audit'}
+                                </small>
+                              </div>
+                              <div className="bf-image-audit-metric">
+                                <span>Alt-text check</span>
+                                <strong className={imageAuditResult.findings.some((finding) => finding.title.toLowerCase().includes('alt text')) ? 'needs-review' : 'passed'}>
+                                  {imageAuditResult.findings.some((finding) => finding.title.toLowerCase().includes('alt text')) ? 'Needs review' : 'Basic checks passed'}
+                                </strong>
+                                <small>Presence, configured length and generic-label checks; contrast results are reported separately below.</small>
+                              </div>
+                              <div className="bf-image-audit-metric">
+                                <span>Findings</span>
+                                <strong className={imageAuditResult.totalFindings > 0 ? 'needs-review' : 'passed'}>{imageAuditResult.totalFindings}</strong>
+                                <small>Rule-based checks only; not a full WCAG or image-understanding audit</small>
+                              </div>
+                            </div>
+
+                            {imageAuditResult.logoVerification && (
+                              <section className={`bf-logo-verification-card outcome-${imageAuditResult.logoVerification.outcome.toLowerCase()}`} aria-label="Brand logo verification">
+                                <div className="bf-logo-verification-heading">
+                                  <div><span className="bf-logo-verification-eyebrow">OFFICIAL BRAND ASSET</span><h3>Logo verification</h3></div>
+                                  <span className={`bf-logo-verification-badge outcome-${imageAuditResult.logoVerification.outcome.toLowerCase()}`}>
+                                    {imageAuditResult.logoVerification.outcome === 'NOT_CONFIGURED' ? 'Not configured' : imageAuditResult.logoVerification.outcome.replace(/_/g, ' ')}
+                                  </span>
+                                </div>
+                                {imageAuditResult.logoVerification.referenceLogo && (
+                                  <div className="bf-logo-reference-row">
+                                    <img src={imageAuditResult.logoVerification.referenceLogo.secureUrl} alt={`Approved reference: ${imageAuditResult.logoVerification.referenceLogo.name}`} />
+                                    <div><strong>{imageAuditResult.logoVerification.referenceLogo.name}</strong><p>{imageAuditResult.logoVerification.referenceLogo.expectedWordmark ? `Expected wordmark: ${imageAuditResult.logoVerification.referenceLogo.expectedWordmark}` : 'No expected wordmark configured'}</p><small>{imageAuditResult.logoVerification.required ? 'Logo required' : 'Logo optional'} · {imageAuditResult.logoVerification.confidence.toLowerCase()} confidence</small></div>
+                                  </div>
+                                )}
+                                <p className="bf-logo-verification-summary">{imageAuditResult.logoVerification.summary}</p>
+                                <div className="bf-logo-check-grid">
+                                  <span><small>Logo detected</small><strong>{imageAuditResult.logoVerification.outcome === 'NOT_CONFIGURED' ? 'Not checked' : imageAuditResult.logoVerification.outcome === 'NEEDS_REVIEW' ? 'Needs review' : imageAuditResult.logoVerification.logoDetected ? 'Yes' : 'No'}</strong></span>
+                                  <span><small>Wordmark</small><strong>{imageAuditResult.logoVerification.wordmarkStatus.replace(/_/g, ' ')}</strong></span>
+                                  <span><small>Logo colors</small><strong>{imageAuditResult.logoVerification.colorStatus.replace(/_/g, ' ')}</strong></span>
+                                  <span><small>Integrity</small><strong>{imageAuditResult.logoVerification.integrityStatus.replace(/_/g, ' ')}</strong></span>
+                                </div>
+                                {imageAuditResult.logoVerification.evidence.length > 0 && <ul className="bf-logo-verification-list">{imageAuditResult.logoVerification.evidence.map((item, index) => <li key={`logo-evidence-${index}`}>{item}</li>)}</ul>}
+                                {imageAuditResult.logoVerification.suggestions.length > 0 && <ul className="bf-logo-verification-list suggestions">{imageAuditResult.logoVerification.suggestions.map((item, index) => <li key={`logo-suggestion-${index}`}>{item}</li>)}</ul>}
+                              </section>
+                            )}
+
+                            <ImageTextContrastReport analysis={imageAuditResult.image.textContrastAnalysis} />
+
+                            <div className="bf-field">
+                              <span className="bf-label">Dominant colors compared with the approved palette</span>
+                              <p className="bf-image-audit-help">The five most common extracted colors are compared with the nearest approved brand color. A match means RGB distance is within the current tolerance; it does not prove overall brand compliance.</p>
+                              {imageAuditResult.image.colorAnalysis ? (
+                                <div className="bf-color-audit-list">
+                                  {imageAuditResult.image.colorAnalysis.map((item) => (
+                                    <div className={`bf-color-audit-item ${!item.nearestApprovedColor ? 'is-no-palette' : item.matchesPalette ? 'is-match' : 'is-off-palette'}`} key={item.color}>
+                                      <span className="bf-swatch-color" style={{ backgroundColor: item.color }} />
+                                      <div className="bf-color-audit-copy">
+                                        <strong>{item.color}</strong>
+                                        <span>{!item.nearestApprovedColor ? 'No approved palette configured' : item.matchesPalette ? 'Within palette tolerance' : 'Outside palette tolerance'}</span>
+                                      </div>
+                                      <div className="bf-color-audit-nearest">
+                                        <small>Nearest approved</small>
+                                        <strong>{item.nearestApprovedColor ?? 'No palette'}</strong>
+                                        {item.distance !== null && <small>RGB distance: {item.distance}</small>}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="bf-image-audit-legacy-note" role="status">
+                                  This is a previously saved audit without per-color comparison results. Run Image Audit again to evaluate each dominant color.
+                                  <div className="bf-swatch-list" style={{ marginTop: '8px' }}>
+                                    {imageAuditResult.image.dominantColors.map((color) => (
+                                      <div className="bf-swatch-item" key={color}>
+                                        <span className="bf-swatch-color" style={{ backgroundColor: color }} />
+                                        <code>{color}</code>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="bf-field">
+                              <span className="bf-label">Approved brand palette</span>
+                              <div className="bf-swatch-list" style={{ marginTop: '8px' }}>
+                                {imageAuditResult.image.approvedColors.length > 0 ? (
+                                  imageAuditResult.image.approvedColors.map((color) => (
+                                    <div className="bf-swatch-item" key={color}>
+                                      <span
+                                        className="bf-swatch-color"
+                                        style={{ backgroundColor: color }}
+                                      />
+                                      <code>{color}</code>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <span className="bf-section-meta">
+                                    No valid approved colors configured.
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {imageAuditResult.findings.map((finding, index) => (
+                              <article
+                                className={`bf-finding-card severity-${finding.severity}`}
+                                key={`${finding.ruleCode}-${finding.title}-${index}`}
+                              >
+                                <div className="bf-finding-meta">
+                                  <div className="bf-finding-tags">
+                                    <span className="bf-rule-tag">{finding.ruleCode}</span>
+                                    <span
+                                      className={`bf-severity-indicator bf-severity-${finding.severity}`}
+                                    >
+                                      {finding.category} · {finding.severity}
+                                    </span>
+                                  </div>
+                                  <span className="bf-source-meta">{finding.confidence}</span>
+                                </div>
+                                <h3 className="bf-finding-title">{finding.title}</h3>
+                                <p className="bf-finding-desc">
+                                  {finding.ruleCode === 'ACCESSIBILITY-02'
+                                    ? getReadableImageFindingCopy(finding, imageAuditResult.image.textContrastAnalysis).summary
+                                    : finding.message}
+                                </p>
+                                <div className="bf-evidence-container">
+                                  <div className="bf-evidence-row">
+                                    <span className="bf-evidence-label">What we found:</span>
+                                    <span>{getReadableImageFindingCopy(finding, imageAuditResult.image.textContrastAnalysis).whatFound}</span>
+                                  </div>
+                                  <div className="bf-evidence-row">
+                                    <span className="bf-evidence-label">What to do:</span>
+                                    <span>{getReadableImageFindingCopy(finding, imageAuditResult.image.textContrastAnalysis).whatToDo}</span>
+                                  </div>
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </form>
+                    </form>
                   </>
                 )}
 
                 {/* Compact Approved Facts Drawer */}
                 {activeView === 'workspace' && (
-<div className="bf-card">
-                  <div className="bf-card-header">
-                    <h2 className="bf-section-title">Approved Product Facts</h2>
-                    <button
-                      type="button"
-                      className="bf-btn-text"
-                      onClick={() => setShowFactsDrawer((prev) => !prev)}
-                    >
-                      {showFactsDrawer ? 'Collapse' : 'Expand'}
-                    </button>
-                  </div>
-                  {showFactsDrawer && (
-                    <div className="bf-card-body">
-                      <div className="bf-compact-facts">
-                        {(brandProfile?.facts ?? SEEDED_BRAND_PROFILE.facts).map((fact) => (
-                          <div key={fact.factCode} className="bf-compact-fact-item">
-                            <span className="bf-rule-tag">{fact.factCode}</span>
-                            <span>{fact.claim}</span>
-                          </div>
-                        ))}
-                      </div>
+                  <div className="bf-card">
+                    <div className="bf-card-header">
+                      <h2 className="bf-section-title">Approved Product Facts</h2>
+                      <button
+                        type="button"
+                        className="bf-btn-text"
+                        onClick={() => setShowFactsDrawer((prev) => !prev)}
+                      >
+                        {showFactsDrawer ? 'Collapse' : 'Expand'}
+                      </button>
                     </div>
-                  )}
-                </div>
+                    {showFactsDrawer && (
+                      <div className="bf-card-body">
+                        <div className="bf-compact-facts">
+                          {(brandProfile?.facts ?? SEEDED_BRAND_PROFILE.facts).map((fact) => (
+                            <div key={fact.factCode} className="bf-compact-fact-item">
+                              <span className="bf-rule-tag">{fact.factCode}</span>
+                              <span>{fact.claim}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -2532,7 +2548,7 @@ export function App() {
                             <details className="bf-privacy-scope">
                               <summary>Scope</summary>
                               <p>
-                                Pattern-based detection can miss names, addresses, dates of birth and other identifiers. Original campaign text still reaches your BrandFlight server and may be retained in drafts or audit evidence.
+                                Pattern-based detection can miss names, addresses, dates of birth and other identifiers. Original campaign text still reaches your Brand Shield AI server and may be retained in drafts or audit evidence.
                               </p>
                             </details>
                           </div>
@@ -2546,34 +2562,30 @@ export function App() {
                                   { id: 'ALL', label: `All (${consolidatedFindings.length})` },
                                   {
                                     id: 'CLAIM',
-                                    label: `Claims (${
-                                      consolidatedFindings.filter((f) => f.category === 'CLAIM')
+                                    label: `Claims (${consolidatedFindings.filter((f) => f.category === 'CLAIM')
                                         .length
-                                    })`,
+                                      })`,
                                   },
                                   {
                                     id: 'TERMINOLOGY',
-                                    label: `Terminology (${
-                                      consolidatedFindings.filter(
-                                        (f) => f.category === 'TERMINOLOGY',
-                                      ).length
-                                    })`,
+                                    label: `Terminology (${consolidatedFindings.filter(
+                                      (f) => f.category === 'TERMINOLOGY',
+                                    ).length
+                                      })`,
                                   },
                                   {
                                     id: 'TONE',
-                                    label: `Tone (${
-                                      consolidatedFindings.filter((f) => f.category === 'TONE')
+                                    label: `Tone (${consolidatedFindings.filter((f) => f.category === 'TONE')
                                         .length
-                                    })`,
+                                      })`,
                                   },
                                 ] as const
                               ).map((tab) => (
                                 <button
                                   key={tab.id}
                                   type="button"
-                                  className={`bf-filter-tab ${
-                                    categoryFilter === tab.id ? 'active' : ''
-                                  }`}
+                                  className={`bf-filter-tab ${categoryFilter === tab.id ? 'active' : ''
+                                    }`}
                                   onClick={() => setCategoryFilter(tab.id)}
                                 >
                                   {tab.label}
@@ -2681,85 +2693,85 @@ export function App() {
 
                 {/* Persisted feedback from the real review workflow */}
                 {routeSubmissionId && reviewerComments.length > 0 && (
-<div className="bf-card bf-creator-feedback">
-                  <div className="bf-card-header">
-                    <div>
-                      <h2 className="bf-section-title">Reviewer Feedback</h2>
-                      <p className="bf-section-meta">
-                        Comments from the Review Queue. These notes are saved with this submission.
-                      </p>
+                  <div className="bf-card bf-creator-feedback">
+                    <div className="bf-card-header">
+                      <div>
+                        <h2 className="bf-section-title">Reviewer Feedback</h2>
+                        <p className="bf-section-meta">
+                          Comments from the Review Queue. These notes are saved with this submission.
+                        </p>
+                      </div>
+                      {reviewerComments.length > 0 && (
+                        <span className="bf-feedback-count">
+                          {reviewerComments.length} {reviewerComments.length === 1 ? 'note' : 'notes'}
+                        </span>
+                      )}
                     </div>
-                    {reviewerComments.length > 0 && (
-                      <span className="bf-feedback-count">
-                        {reviewerComments.length} {reviewerComments.length === 1 ? 'note' : 'notes'}
-                      </span>
-                    )}
-                  </div>
 
-                  <div className="bf-card-body">
-                    {reviewerComments.length > 0 ? (
-                      <div className="bf-creator-feedback-list">
-                        {reviewerComments.map((comment) => {
-                          const normalizedBody = comment.body.replace(/^\uFEFF/, '').trimStart()
-                          const bodyLines = normalizedBody.split(/\r?\n/)
-                          const isOverrideDecision = /^OVERRIDE DECISION(?:\r?\n|$)/i.test(normalizedBody)
-                          const decision = bodyLines.find((line) => /^Decision:\s*/i.test(line))?.replace(/^Decision:\s*/i, '').trim().toUpperCase()
-                          const decisionTone = decision === 'ACCEPTED' ? 'accepted' : decision === 'REJECTED' ? 'rejected' : ''
-                          const decisionNote = bodyLines.find((line) => /^Decision note:\s*/i.test(line))?.replace(/^Decision note:\s*/i, '').trim()
-                          const isChangeRequest = /^CHANGE REQUEST(?:\r?\n|$)/i.test(normalizedBody)
+                    <div className="bf-card-body">
+                      {reviewerComments.length > 0 ? (
+                        <div className="bf-creator-feedback-list">
+                          {reviewerComments.map((comment) => {
+                            const normalizedBody = comment.body.replace(/^\uFEFF/, '').trimStart()
+                            const bodyLines = normalizedBody.split(/\r?\n/)
+                            const isOverrideDecision = /^OVERRIDE DECISION(?:\r?\n|$)/i.test(normalizedBody)
+                            const decision = bodyLines.find((line) => /^Decision:\s*/i.test(line))?.replace(/^Decision:\s*/i, '').trim().toUpperCase()
+                            const decisionTone = decision === 'ACCEPTED' ? 'accepted' : decision === 'REJECTED' ? 'rejected' : ''
+                            const decisionNote = bodyLines.find((line) => /^Decision note:\s*/i.test(line))?.replace(/^Decision note:\s*/i, '').trim()
+                            const isChangeRequest = /^CHANGE REQUEST(?:\r?\n|$)/i.test(normalizedBody)
 
-                          return (
-                            <article
-                              className={`bf-creator-feedback-item${isChangeRequest ? ' bf-creator-feedback-item-request' : ''}${isOverrideDecision ? ` bf-creator-feedback-item-decision ${decisionTone}` : ''}`}
-                              key={comment.id}
-                            >
-                              <div className="bf-creator-feedback-heading">
-                                <strong>{comment.author?.name ?? 'Reviewer'}</strong>
-                                <span className="bf-creator-feedback-role">
-                                  {comment.author?.role ?? 'REVIEWER'}
-                                </span>
-                              </div>
-                              {isOverrideDecision ? (
-                                <>
-                                  <span className={`bf-override-decision-badge ${decisionTone}`}>
-                                    {decision === 'ACCEPTED' ? 'Override request accepted' : decision === 'REJECTED' ? 'Override request rejected' : 'Override request decision'}
-                                  </span>
-                                  {decisionNote && (
-                                    <div className="bf-creator-feedback-decision-note">
-                                      <span>Reviewer rationale</span>
-                                      <p>{decisionNote}</p>
-                                    </div>
-                                  )}
-                                </>
-                              ) : isChangeRequest ? (
-                                <>
-                                  <span className="bf-change-request-badge">Changes requested · action required</span>
-                                  <p className="bf-change-request-note">{bodyLines.slice(1).join('\n').trim()}</p>
-                                </>
-                              ) : <p className="bf-creator-feedback-note">{comment.body}</p>}
-                              <time
-                                className="bf-creator-feedback-time"
-                                dateTime={comment.createdAt}
+                            return (
+                              <article
+                                className={`bf-creator-feedback-item${isChangeRequest ? ' bf-creator-feedback-item-request' : ''}${isOverrideDecision ? ` bf-creator-feedback-item-decision ${decisionTone}` : ''}`}
+                                key={comment.id}
                               >
-                                {new Date(comment.createdAt).toLocaleString()}
-                              </time>
-                            </article>
-                          )
-                        })}
-                      </div>
-                    ) : (
-                      <div className="bf-creator-feedback-empty">
-                        <span className="bf-creator-feedback-empty-mark" aria-hidden="true">✓</span>
-                        <div>
-                          <strong>No reviewer feedback yet</strong>
-                          <p>
-                            When a reviewer requests changes or leaves a note, it will appear here.
-                          </p>
+                                <div className="bf-creator-feedback-heading">
+                                  <strong>{comment.author?.name ?? 'Reviewer'}</strong>
+                                  <span className="bf-creator-feedback-role">
+                                    {comment.author?.role ?? 'REVIEWER'}
+                                  </span>
+                                </div>
+                                {isOverrideDecision ? (
+                                  <>
+                                    <span className={`bf-override-decision-badge ${decisionTone}`}>
+                                      {decision === 'ACCEPTED' ? 'Override request accepted' : decision === 'REJECTED' ? 'Override request rejected' : 'Override request decision'}
+                                    </span>
+                                    {decisionNote && (
+                                      <div className="bf-creator-feedback-decision-note">
+                                        <span>Reviewer rationale</span>
+                                        <p>{decisionNote}</p>
+                                      </div>
+                                    )}
+                                  </>
+                                ) : isChangeRequest ? (
+                                  <>
+                                    <span className="bf-change-request-badge">Changes requested · action required</span>
+                                    <p className="bf-change-request-note">{bodyLines.slice(1).join('\n').trim()}</p>
+                                  </>
+                                ) : <p className="bf-creator-feedback-note">{comment.body}</p>}
+                                <time
+                                  className="bf-creator-feedback-time"
+                                  dateTime={comment.createdAt}
+                                >
+                                  {new Date(comment.createdAt).toLocaleString()}
+                                </time>
+                              </article>
+                            )
+                          })}
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="bf-creator-feedback-empty">
+                          <span className="bf-creator-feedback-empty-mark" aria-hidden="true">✓</span>
+                          <div>
+                            <strong>No reviewer feedback yet</strong>
+                            <p>
+                              When a reviewer requests changes or leaves a note, it will appear here.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
                 )}
               </div>
             </div>
@@ -2852,10 +2864,10 @@ export function App() {
       {demoLoginBusyRole && (
         <div className="bf-session-switch-overlay" role="status" aria-live="polite">
           <div className="bf-session-switch-card">
-            <span className="bf-session-switch-mark" role="img" aria-label="BrandFlight logo">
-              <img src="/brandflight-mark.svg" alt="" />
+            <span className="bf-session-switch-mark" role="img" aria-label="Brand Shield AI logo">
+              <img src="/brandshield-mark.svg" alt="" />
             </span>
-            <span className="bf-session-switch-eyebrow">BRANDFLIGHT DEMO</span>
+            <span className="bf-session-switch-eyebrow">BRAND SHIELD AI DEMO</span>
             <h2>Switching session</h2>
             <p>Opening the {demoLoginBusyRole === 'CREATOR' ? 'Creator' : demoLoginBusyRole === 'REVIEWER' ? 'Reviewer' : 'Manager'} workspace</p>
             <div className="bf-session-switch-track" aria-hidden="true"><i /></div>

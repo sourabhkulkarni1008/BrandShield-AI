@@ -20,7 +20,7 @@ export default function BrandAccessibilityStandards({ value, onChange }: Props) 
         <div>
           <span className="bf-contrast-eyebrow">SAVED BRAND RULES · ACCESSIBILITY</span>
           <h3 id="bf-accessibility-standards-title">Accessible colour roles</h3>
-          <p>These are manager-approved reference colour pairs for each design role. BrandFlight checks each saved pair against its role's WCAG target and shows it as a reference during image review. For text in uploaded images, the audit measures the actual pixel colours and selects the WCAG threshold by text size: 4.5:1 for normal or unknown-size text, and 3:1 for large text. Saved hex values are references, not exact-match rules.</p>
+          <p>These are manager-approved reference colour pairs for each design role. Brand Shield AI checks each saved pair against its role's WCAG target and shows it as a reference during image review. For text in uploaded images, the audit measures the actual pixel colours and selects the WCAG threshold by text size: 4.5:1 for normal or unknown-size text, and 3:1 for large text. Saved hex values are references, not exact-match rules.</p>
         </div>
         <span className="bf-contrast-count">5 standards</span>
       </div>

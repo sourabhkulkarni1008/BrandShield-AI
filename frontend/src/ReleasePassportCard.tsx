@@ -17,7 +17,7 @@ export default function ReleasePassportCard({ passport }: Props) {
   if (!passport) {
     return (
       <section className="bf-release-passport bf-release-passport-unavailable" aria-label="Release passport unavailable">
-        <div className="bf-release-passport-topline"><span>BRANDFLIGHT RELEASE PASSPORT</span><strong>NOT ISSUED</strong></div>
+        <div className="bf-release-passport-topline"><span>BRAND SHIELD AI RELEASE PASSPORT</span><strong>NOT ISSUED</strong></div>
         <h3>No passport on record</h3>
         <p className="bf-release-passport-copy">This campaign was approved before Release Passport issuance was enabled. Newly approved campaigns receive a verifiable release record.</p>
       </section>
@@ -39,7 +39,7 @@ export default function ReleasePassportCard({ passport }: Props) {
     <section className="bf-release-passport" aria-label="Release passport">
       <div className="bf-release-passport-topline">
         <span className="bf-release-passport-icon" aria-hidden="true">✓</span>
-        <span>BRANDFLIGHT RELEASE PASSPORT</span>
+        <span>BRAND SHIELD AI RELEASE PASSPORT</span>
         <strong>ISSUED</strong>
       </div>
       <h3>Approved campaign record</h3>

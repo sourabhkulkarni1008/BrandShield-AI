@@ -149,7 +149,7 @@ export default function BrandContrastAnalyzer({ colors }: Props) {
 
       <div className="bf-contrast-preview" style={{ color: previewForeground, backgroundColor: previewBackground }}>
         <span>LIVE PREVIEW</span>
-        <strong>BrandFlight makes every message count.</strong>
+        <strong>Brand Shield AI protects every campaign.</strong>
         <p>Sample body text shows how this colour pairing reads at normal size.</p>
         <small>Small supporting text preview</small>
       </div>
