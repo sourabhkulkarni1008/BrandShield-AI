@@ -2155,3 +2155,100 @@ body {
     flex-direction: column !important;
   }
 }
+
+/* ==========================================================================
+   ABSOLUTE ZERO-WHITE-BOX ENFORCEMENT
+   Prevents any legacy or third-party container, card, or element from
+   rendering with a white, off-white, or light grey background anywhere.
+   ========================================================================== */
+.bf-header-nav,
+.bf-nav,
+.bf-campaign-status-item,
+.bf-campaign-bundle,
+.bf-campaign-bundle-intro,
+.bf-campaign-bundle-statuses,
+.bf-review-page,
+.bf-review-layout,
+.bf-review-list,
+.bf-review-list-header,
+.bf-review-detail,
+.bf-review-detail-empty,
+.bf-review-empty,
+.bf-review-queue-item,
+.bf-review-tabs,
+.bf-card,
+.bf-panel,
+.bf-finding-card,
+.bf-finding,
+.bf-audit-toolbar,
+.bf-compact-fact-item,
+.bf-saved-card,
+.bf-saved-empty,
+.bf-approved-list,
+.bf-approved-detail,
+.bf-approved-card,
+.bf-approved-item,
+.bf-approved-thread-empty,
+.bf-manager-card,
+.bf-manager-metric,
+.bf-rulebook-card,
+.bf-rulebook-section,
+.bf-dialog,
+.bf-modal,
+.bf-decision-confirmation,
+.bf-override-dialog,
+.bf-brand-asset-preview,
+.bf-brand-asset-file {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.bf-header-nav {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.bf-review-layout {
+  background: transparent !important;
+}
+
+.bf-review-list,
+.bf-review-detail {
+  background: rgba(13, 20, 36, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(20px) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.bf-review-queue-item {
+  background: rgba(13, 20, 36, 0.8) !important;
+  color: #cbd5e1 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.bf-review-queue-item:hover,
+.bf-review-queue-item.active {
+  background: rgba(18, 28, 48, 0.95) !important;
+}
+
+.bf-review-tabs {
+  background: rgba(8, 14, 26, 0.85) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.bf-review-tabs button {
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: #94a3b8 !important;
+}
+
+.bf-review-tabs button.active {
+  background: rgba(0, 242, 254, 0.15) !important;
+  color: #00f2fe !important;
+  border-color: rgba(0, 242, 254, 0.4) !important;
+}
+
+.bf-campaign-bundle-statuses {
+  background: transparent !important;
+}
+
