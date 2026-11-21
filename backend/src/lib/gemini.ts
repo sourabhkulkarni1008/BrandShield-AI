@@ -49,15 +49,32 @@ export async function testGeminiApiKey(
     const key = apiKey.trim();
     if (!key) return { valid: false, model: getGeminiModel(), error: "API key is required." };
     const client = new GoogleGenAI({ apiKey: key });
-    const model = getGeminiModel();
-    const response = await client.models.generateContent({
-      model,
-      contents: "Reply with 'OK'",
-    });
-    if (response.text) {
-      return { valid: true, model };
+    const candidateModels = [getGeminiModel(), "gemini-flash-latest", "gemini-2.5-flash", "gemini-3.8-flash"];
+
+    for (const model of [...new Set(candidateModels)]) {
+      try {
+        const response = await client.models.generateContent({
+          model,
+          contents: "Reply with 'OK'",
+        });
+        if (response.text) {
+          return { valid: true, model };
+        }
+      } catch (candidateErr: unknown) {
+        const msg = candidateErr instanceof Error ? candidateErr.message : String(candidateErr);
+        if (msg.includes("503") || msg.includes("high demand")) {
+          return {
+            valid: true,
+            model,
+            error: "Authenticated successfully (Google is currently experiencing high demand; BrandShield will automatically use the local rulebook engine when busy).",
+          };
+        }
+        if (!msg.includes("404") && !msg.includes("no longer available")) {
+          return { valid: false, model, error: msg };
+        }
+      }
     }
-    return { valid: false, model, error: "Empty response received from Gemini API." };
+    return { valid: false, model: getGeminiModel(), error: "Unable to find an active model endpoint for this key." };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     return { valid: false, model: getGeminiModel(), error: message };
