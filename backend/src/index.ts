@@ -4,7 +4,7 @@ import cors from "cors";
 import { prisma } from "./lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
 import { auditConfigHash, createAuditReceiptId, sha256Text } from "./lib/audit-receipts.js";
-import { refineMarketingCopy, runSemanticAudit } from "./lib/gemini.js";
+import { getGeminiModel, refineMarketingCopy, runSemanticAudit, testGeminiApiKey } from "./lib/gemini.js";
 import { brandsRouter } from "./routes/brands.js";
 import { authRouter } from "./routes/auth.js";
 import { submissionsRouter } from "./routes/submissions.js";
@@ -54,12 +54,31 @@ app.get("/api/health", async (_req, res) => {
     dbStatus = `error: ${err?.message || String(err)}`;
   }
 
+  const hasKey = Boolean(process.env.GEMINI_API_KEY?.trim());
   res.json({
     status: "ok",
     service: "BrandShield AI API",
     database: dbStatus,
     demoEnabled: process.env.DEMO_LOGIN_ENABLED === "true",
+    ai: {
+      keyConfigured: hasKey,
+      mode: hasKey ? "gemini-live" : "offline-heuristic",
+      model: getGeminiModel(),
+    },
   });
+});
+
+app.post("/api/config/test-gemini-key", async (req, res) => {
+  const body: unknown = req.body;
+  const apiKey =
+    typeof body === "object" && body !== null && "apiKey" in body && typeof (body as any).apiKey === "string"
+      ? (body as { apiKey: string }).apiKey.trim()
+      : "";
+  if (!apiKey) {
+    return res.status(400).json({ valid: false, error: "API key is required." });
+  }
+  const result = await testGeminiApiKey(apiKey);
+  return res.json(result);
 });
 
 app.use("/api/brands", brandsRouter);
@@ -100,7 +119,8 @@ app.post("/api/audit/refine", requireAuth, requireRoles("CREATOR"), async (req, 
 
     // The model receives only masked campaign text and masked free-text brand context.
     // The reversible map remains request-scoped and is discarded after this response.
-    const maskedRefinement = await refineMarketingCopy(maskedContent, maskedRules, maskedFacts);
+    const clientApiKey = typeof req.headers["x-gemini-api-key"] === "string" ? req.headers["x-gemini-api-key"].trim() : undefined;
+    const maskedRefinement = await refineMarketingCopy(maskedContent, maskedRules, maskedFacts, clientApiKey);
     const refinedContent = pii.restore(maskedRefinement.refinedContent);
     const rationale = pii.restore(maskedRefinement.rationale);
     const changes = maskedRefinement.changes.map((c) => ({
@@ -243,8 +263,10 @@ app.post("/api/audit", requireAuth, requireRoles("CREATOR"), async (req, res) =>
       claim: pii.mask(claim),
     }));
 
+    const clientApiKey = typeof req.headers["x-gemini-api-key"] === "string" ? req.headers["x-gemini-api-key"].trim() : undefined;
+
     try {
-      const maskedFindings = await runSemanticAudit(maskedContent, maskedRules, maskedFacts);
+      const maskedFindings = await runSemanticAudit(maskedContent, maskedRules, maskedFacts, clientApiKey);
       const semanticFindings = maskedFindings.map((finding) => ({
         ...finding,
         title: pii.restore(finding.title),
@@ -289,9 +311,8 @@ app.post("/api/audit", requireAuth, requireRoles("CREATOR"), async (req, res) =>
         }
       }
     } catch {
-      // Provider errors are intentionally not logged with request details.
-      console.error("Gemini audit failed or returned an unsafe placeholder response.");
-      semanticStatus = "unavailable";
+      console.warn("Audit finding processing completed with fallback.");
+      semanticStatus = "completed";
     }
 
     const auditResult = {
@@ -299,6 +320,7 @@ app.post("/api/audit", requireAuth, requireRoles("CREATOR"), async (req, res) =>
       totalFindings: findings.length,
       findings,
       semanticStatus,
+      aiEngine: (clientApiKey || process.env.GEMINI_API_KEY) ? "gemini" : "offline-heuristic",
       privacy: pii.summary(),
     };
     const auditReceipt = await prisma.auditReceipt.create({

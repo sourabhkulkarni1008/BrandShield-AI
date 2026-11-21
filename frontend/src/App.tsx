@@ -574,6 +574,26 @@ export function App() {
   } | null>(null)
   const [auditedImageAltText, setAuditedImageAltText] = useState<string | null>(null)
   const [rulebookHighlightRuleCode, setRulebookHighlightRuleCode] = useState<string | null>(null)
+  const [aiKeyModalOpen, setAiKeyModalOpen] = useState(false)
+  const [backendAiStatus, setBackendAiStatus] = useState<{
+    keyConfigured: boolean
+    mode: string
+    model: string
+  } | null>(null)
+  const [customGeminiKey, setCustomGeminiKey] = useState<string>(
+    () => window.sessionStorage.getItem('brandshield_gemini_key') || '',
+  )
+  const [keyInputVal, setKeyInputVal] = useState<string>(
+    () => window.sessionStorage.getItem('brandshield_gemini_key') || '',
+  )
+  const [keyTesting, setKeyTesting] = useState(false)
+  const [showKeyText, setShowKeyText] = useState(false)
+  const [keyTestFeedback, setKeyTestFeedback] = useState<{
+    status: 'idle' | 'success' | 'error'
+    message: string
+  } | null>(null)
+  const isAiLive = Boolean(backendAiStatus?.keyConfigured || customGeminiKey.trim())
+
   const [aiSuggestionModalOpen, setAiSuggestionModalOpen] = useState(false)
   const [aiSuggestionData, setAiSuggestionData] = useState<{
     originalContent: string
@@ -836,7 +856,19 @@ export function App() {
     async function checkApi() {
       try {
         const res = await fetch(`${API_BASE_URL}/api/health`)
-        if (!ignore) setApiHealth(res.ok ? 'online' : 'offline')
+        if (!ignore) {
+          if (res.ok) {
+            setApiHealth('online')
+            const data = (await res.json().catch(() => null)) as {
+              ai?: { keyConfigured: boolean; mode: string; model: string }
+            } | null
+            if (data?.ai) {
+              setBackendAiStatus(data.ai)
+            }
+          } else {
+            setApiHealth('offline')
+          }
+        }
       } catch {
         if (!ignore) setApiHealth('offline')
       }
@@ -846,6 +878,64 @@ export function App() {
       ignore = true
     }
   }, [])
+
+  const handleTestAndSaveKey = async () => {
+    const trimmed = keyInputVal.trim()
+    if (!trimmed) {
+      window.sessionStorage.removeItem('brandshield_gemini_key')
+      setCustomGeminiKey('')
+      setKeyTestFeedback({
+        status: 'idle',
+        message: 'Custom session key removed. Running on Local Rules Engine.',
+      })
+      return
+    }
+
+    setKeyTesting(true)
+    setKeyTestFeedback(null)
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/config/test-gemini-key`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: trimmed }),
+      })
+      const data = (await response.json().catch(() => null)) as {
+        valid?: boolean
+        model?: string
+        error?: string
+      } | null
+      if (response.ok && data?.valid) {
+        window.sessionStorage.setItem('brandshield_gemini_key', trimmed)
+        setCustomGeminiKey(trimmed)
+        setKeyTestFeedback({
+          status: 'success',
+          message: `✓ Gemini API key verified! Active model: ${data.model ?? 'gemini-2.5-flash'}`,
+        })
+      } else {
+        setKeyTestFeedback({
+          status: 'error',
+          message: `✕ ${data?.error ?? 'Unable to verify API key with Google Gemini.'}`,
+        })
+      }
+    } catch (err) {
+      setKeyTestFeedback({
+        status: 'error',
+        message: `✕ ${err instanceof Error ? err.message : 'Network error testing API key.'}`,
+      })
+    } finally {
+      setKeyTesting(false)
+    }
+  }
+
+  const handleClearCustomKey = () => {
+    window.sessionStorage.removeItem('brandshield_gemini_key')
+    setCustomGeminiKey('')
+    setKeyInputVal('')
+    setKeyTestFeedback({
+      status: 'idle',
+      message: 'Session key cleared. Running on Local Rules Engine.',
+    })
+  }
 
   const runBackendAudit = useCallback(async (textToAudit: string) => {
     if (!textToAudit.trim()) {
@@ -865,6 +955,7 @@ export function App() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${getStoredAuthToken()}`,
+          ...(customGeminiKey.trim() ? { 'x-gemini-api-key': customGeminiKey.trim() } : {}),
         },
         body: JSON.stringify({
           brandProfileId: BRAND_PROFILE_ID,
@@ -897,7 +988,7 @@ export function App() {
     } finally {
       setIsAuditing(false)
     }
-  }, [])
+  }, [customGeminiKey])
 
   const handleImageAuditSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -929,6 +1020,7 @@ export function App() {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${getStoredAuthToken()}`,
+          ...(customGeminiKey.trim() ? { 'x-gemini-api-key': customGeminiKey.trim() } : {}),
         },
         body: formData,
       })
@@ -1173,7 +1265,11 @@ export function App() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/submissions/${encodeURIComponent(editingSubmissionId)}/comments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authSession.token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authSession.token}`,
+          ...(customGeminiKey.trim() ? { 'x-gemini-api-key': customGeminiKey.trim() } : {}),
+        },
         body: JSON.stringify({ body, overrideReasonCategory }),
       })
       const data = (await response.json().catch(() => null)) as {
@@ -1210,7 +1306,11 @@ export function App() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/audit/refine`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authSession.token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authSession.token}`,
+          ...(customGeminiKey.trim() ? { 'x-gemini-api-key': customGeminiKey.trim() } : {}),
+        },
         body: JSON.stringify({ brandProfileId: BRAND_PROFILE_ID, content }),
       })
       const data = await response.json().catch(() => null) as { refinedContent?: string; error?: string; privacy?: { totalUniqueValues?: number; categories?: Array<{ type: string; count: number }> } } | null
@@ -1790,14 +1890,26 @@ export function App() {
                 Brand: <strong>{brandProfile?.name ?? auditResult?.brand.name ?? SEEDED_BRAND_PROFILE.name}</strong>
               </span>
               <span className="bf-header-divider" aria-hidden="true" />
-              <span className="bf-api-indicator" title={`Endpoint: ${API_BASE_URL}/api/audit`}>
-                <span className={`bf-status-dot ${apiHealth}`} />
-                {apiHealth === 'online'
-                  ? 'API Connected'
-                  : apiHealth === 'offline'
-                    ? 'API Offline'
-                    : 'Checking API...'}
-              </span>
+              <div className="bf-header-status-group">
+                <span className="bf-api-indicator" title={`Backend Server: ${API_BASE_URL}`}>
+                  <span className={`bf-status-dot ${apiHealth}`} />
+                  {apiHealth === 'online'
+                    ? 'API Connected'
+                    : apiHealth === 'offline'
+                      ? 'API Offline'
+                      : 'Checking API...'}
+                </span>
+                <button
+                  type="button"
+                  className={`bf-ai-status-pill ${isAiLive ? 'is-live' : 'is-fallback'}`}
+                  onClick={() => setAiKeyModalOpen(true)}
+                  title="Configure or inspect Gemini AI and Local Rulebook Engine"
+                >
+                  <span className={`bf-ai-status-dot ${isAiLive ? 'is-live' : 'is-fallback'}`} />
+                  <span>{isAiLive ? 'Gemini 2.5 Active' : 'AI: Local Rules Engine'}</span>
+                  <span className="bf-ai-status-action">{isAiLive ? 'Settings' : 'Add Key ↗'}</span>
+                </button>
+              </div>
               <span className="bf-header-divider" aria-hidden="true" />
               <div className="bf-auth-user">
                 <span className="bf-auth-user-name">
@@ -2719,16 +2831,22 @@ export function App() {
                         ) : (
                           <div className="bf-status-banner warn">
                             <div className="bf-banner-body">
-                              <div className="bf-banner-heading">
+                              <div className="bf-banner-heading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                 <span>
-                                  Deterministic audit completed — AI semantic check unavailable
+                                  Deterministic &amp; Heuristic Checks Completed · Local Rules Engine
                                 </span>
+                                <button
+                                  type="button"
+                                  className="bf-btn-toggle-edit"
+                                  style={{ padding: '3px 10px', fontSize: '11.5px', marginLeft: 'auto' }}
+                                  onClick={() => setAiKeyModalOpen(true)}
+                                >
+                                  Configure Gemini Key ↗
+                                </button>
                               </div>
                               <div>
-                                Terminology rules and numerical fact checks ran on the server, but
-                                Gemini semantic evaluation was unavailable. Verify{' '}
-                                <code>GEMINI_API_KEY</code> and <code>GEMINI_MODEL</code> in{' '}
-                                <code>backend/.env</code>.
+                                Terminology rules, numeric facts, and offline heuristic tone checks were evaluated.
+                                Connect a <code>GEMINI_API_KEY</code> anytime to unlock generative LLM reasoning and multimodal reviews.
                               </div>
                             </div>
                           </div>
@@ -3189,6 +3307,134 @@ export function App() {
                 ✓ Accept &amp; Apply to Editor
               </button>
             </footer>
+          </section>
+        </div>
+      )}
+      {aiKeyModalOpen && (
+        <div
+          className="bf-decision-confirmation-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !keyTesting) setAiKeyModalOpen(false)
+          }}
+        >
+          <section
+            className="bf-key-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bf-key-modal-title"
+          >
+            <header className="bf-key-modal-header">
+              <div>
+                <h2 id="bf-key-modal-title" className="bf-key-modal-title">
+                  BrandShield AI Engine &amp; Key Settings
+                </h2>
+                <p className="bf-key-modal-subtitle">
+                  Inspect active AI reasoning engines, test connectivity, and supply a Gemini API key.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="bf-modal-close-btn"
+                aria-label="Close settings"
+                onClick={() => setAiKeyModalOpen(false)}
+              >
+                ✕
+              </button>
+            </header>
+
+            {/* Mode Cards */}
+            <div className="bf-key-mode-cards">
+              <div className={`bf-key-mode-card ${!isAiLive ? 'active' : ''}`}>
+                <span className="bf-key-mode-badge blue">● Always Active (Offline-Safe)</span>
+                <h4 className="bf-key-mode-title">Local Rulebook Engine</h4>
+                <p className="bf-key-mode-desc">
+                  Deterministic regex rules, PII tokenization masking, numeric catalogue checks, and heuristic semantic evaluation. 100% private, never blocked.
+                </p>
+              </div>
+
+              <div className={`bf-key-mode-card ${isAiLive ? 'active' : ''}`}>
+                <span className={`bf-key-mode-badge ${isAiLive ? 'green' : ''}`}>
+                  {isAiLive ? '● Connected & Active' : '○ Offline / Unconfigured'}
+                </span>
+                <h4 className="bf-key-mode-title">Google Gemini AI (LLM)</h4>
+                <p className="bf-key-mode-desc">
+                  Model: <code>{backendAiStatus?.model ?? 'gemini-2.5-flash'}</code>. Deep nuance evaluation, generative copy refinement, and vision multimodal inspection.
+                </p>
+              </div>
+            </div>
+
+            {/* API Key Form */}
+            <div className="bf-key-input-group">
+              <label htmlFor="bf-gemini-key-input" className="bf-key-input-label">
+                Google Gemini API Key (Session Override)
+              </label>
+              <div className="bf-key-input-row">
+                <input
+                  id="bf-gemini-key-input"
+                  type={showKeyText ? 'text' : 'password'}
+                  className="bf-key-input"
+                  placeholder="AIzaSy..."
+                  value={keyInputVal}
+                  onChange={(e) => setKeyInputVal(e.target.value)}
+                  disabled={keyTesting}
+                />
+                <button
+                  type="button"
+                  className="bf-btn-secondary"
+                  onClick={() => setShowKeyText(!showKeyText)}
+                  title={showKeyText ? 'Hide key' : 'Show key'}
+                >
+                  {showKeyText ? 'Hide' : 'Show'}
+                </button>
+                <button
+                  type="button"
+                  className="bf-key-btn-test"
+                  onClick={() => void handleTestAndSaveKey()}
+                  disabled={keyTesting}
+                >
+                  {keyTesting ? 'Verifying...' : 'Test & Save'}
+                </button>
+                {customGeminiKey && (
+                  <button
+                    type="button"
+                    className="bf-key-btn-clear"
+                    onClick={handleClearCustomKey}
+                    disabled={keyTesting}
+                    title="Remove custom key"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Test feedback */}
+            {keyTestFeedback && (
+              <div className={`bf-key-feedback ${keyTestFeedback.status}`}>
+                {keyTestFeedback.message}
+              </div>
+            )}
+
+            {/* Guide & Setup instructions */}
+            <div className="bf-key-help-box">
+              <strong>Need a Gemini API Key?</strong>
+              <p>
+                1. Get a free API key at{' '}
+                <a
+                  href="https://aistudio.google.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Google AI Studio (aistudio.google.com) ↗
+                </a>
+              </p>
+              <p>
+                2. Paste it in the box above to use it immediately in this session, or save it permanently in your backend environment:
+              </p>
+              <code className="bf-key-code">
+                backend/.env → GEMINI_API_KEY="AIzaSy..."
+              </code>
+            </div>
           </section>
         </div>
       )}

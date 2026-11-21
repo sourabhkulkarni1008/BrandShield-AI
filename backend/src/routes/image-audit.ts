@@ -494,11 +494,13 @@ async function processImageAudit(req: Request, res: Response) {
   }
 
   const accessibilityPairs = parseAccessibilityColorPairs(brand.accessibilityPairs);
+  const clientApiKey = typeof req.headers["x-gemini-api-key"] === "string" ? req.headers["x-gemini-api-key"].trim() : undefined;
   let textContrastAnalysis: ImageTextContrastReport;
   try {
     const visionResult = await analyzeImageTextContrast(
       imageBuffer,
       metadata.format === "jpeg" ? "image/jpeg" : `image/${metadata.format}`,
+      clientApiKey,
     );
     const pixelImage = await sharp(imageBuffer, {
       limitInputPixels: 40_000_000,
@@ -602,6 +604,7 @@ async function processImageAudit(req: Request, res: Response) {
         configuredLogo.description === null
           ? null
           : logoTextPii.mask(configuredLogo.description),
+        clientApiKey,
       );
       const restoredComparison: LogoVisualComparison = {
         ...comparison,
