@@ -139,7 +139,7 @@ export default function SavedSubmissionsPanel({
   }, [loadSubmissions])
 
   const handleOpen = async (item: SubmissionSummary) => {
-    if (item.status !== 'DRAFT' && item.status !== 'CHANGES_REQUESTED') return
+    if (item.status !== 'DRAFT' && item.status !== 'CHANGES_REQUESTED' && item.status !== 'REJECTED') return
 
     setOpeningId(item.id)
     setError(null)
@@ -467,6 +467,7 @@ export default function SavedSubmissionsPanel({
                 <option value="ALL">All statuses</option>
                 <option value="DRAFT">Draft</option>
                 <option value="CHANGES_REQUESTED">Changes requested</option>
+                <option value="REJECTED">Rejected</option>
                 <option value="IN_REVIEW">In review</option>
                 <option value="APPROVED">Approved</option>
               </select>
@@ -495,7 +496,7 @@ export default function SavedSubmissionsPanel({
           ) : (
             <div className={`bf-saved-grid bf-saved-grid-columns-${cardsPerRow}`}>
               {filteredSubmissions.map((item) => {
-                const editable = item.status === 'DRAFT' || item.status === 'CHANGES_REQUESTED'
+                const editable = item.status === 'DRAFT' || item.status === 'CHANGES_REQUESTED' || item.status === 'REJECTED'
                 const isEditing = editingDetailsId === item.id
                 const busy = openingId === item.id || submittingId === item.id || savingDetailsId === item.id
 

@@ -101,10 +101,20 @@ app.post("/api/audit/refine", requireAuth, requireRoles("CREATOR"), async (req, 
     // The model receives only masked campaign text and masked free-text brand context.
     // The reversible map remains request-scoped and is discarded after this response.
     const maskedRefinement = await refineMarketingCopy(maskedContent, maskedRules, maskedFacts);
-    const refinedContent = pii.restore(maskedRefinement);
+    const refinedContent = pii.restore(maskedRefinement.refinedContent);
+    const rationale = pii.restore(maskedRefinement.rationale);
+    const changes = maskedRefinement.changes.map((c) => ({
+      originalPhrase: pii.restore(c.originalPhrase),
+      suggestedPhrase: pii.restore(c.suggestedPhrase),
+      ruleCode: c.ruleCode,
+      reason: pii.restore(c.reason),
+    }));
     return res.json({
       brand: { id: brand.id, name: brand.name },
+      originalContent: payload.content,
       refinedContent,
+      rationale,
+      changes,
       privacy: pii.summary(),
     });
   } catch {
@@ -169,6 +179,12 @@ app.post("/api/audit", requireAuth, requireRoles("CREATOR"), async (req, res) =>
             suggestion: `Review or replace "${match}" with appropriate wording.`,
             ruleCode: rule.ruleCode,
             confidence: "Deterministic Match",
+            guidelineId: rule.ruleCode,
+            guidelineTitle: rule.title,
+            guidelineText: rule.description,
+            whyViolates: `The phrase "${match}" matches prohibited terminology configured under brand guideline ${rule.ruleCode}.`,
+            recommendedAction: `Replace or remove "${match}" to adhere to approved brand terminology.`,
+            isGrounded: "true",
           });
         }
       } catch {
@@ -184,6 +200,10 @@ app.post("/api/audit", requireAuth, requireRoles("CREATOR"), async (req, res) =>
       piiRanges,
     );
 
+    const claimRule =
+      brand.rules.find((r) => r.ruleCode === "CLAIM-01") ??
+      brand.rules.find((r) => r.category === "CLAIM");
+
     for (const claim of unverifiedNumericClaims) {
       if (findings.length >= 20) break;
 
@@ -197,8 +217,16 @@ app.post("/api/audit", requireAuth, requireRoles("CREATOR"), async (req, res) =>
         originalSpan: claim,
         suggestedSpan: "",
         suggestion: "Check the approved product facts before using this claim.",
-        ruleCode: "CLAIM-01",
+        ruleCode: claimRule?.ruleCode ?? "CLAIM-01",
         confidence: "Needs Human Review",
+        guidelineId: claimRule?.ruleCode ?? "CLAIM-01",
+        guidelineTitle: claimRule?.title ?? "Product & Numeric Claim Verification",
+        guidelineText:
+          claimRule?.description ??
+          "Product claims, packaging sizes, prices, and dimensions must strictly match approved catalogue facts.",
+        whyViolates: `The numerical expression "${claim}" does not match any verified product fact in the approved catalogue.`,
+        recommendedAction: "Align with verified brand catalogue numbers or remove unverified metrics.",
+        isGrounded: "true",
       });
     }
 
@@ -237,7 +265,27 @@ app.post("/api/audit", requireAuth, requireRoles("CREATOR"), async (req, res) =>
         );
 
         if (!duplicate && findings.length < 20) {
-          findings.push(finding);
+          const matchedRule = brand.rules.find((r) => r.ruleCode === finding.ruleCode);
+          const matchedFact = !matchedRule ? brand.facts.find((f) => f.factCode === finding.ruleCode) : null;
+          const isGrounded = Boolean(matchedRule || matchedFact);
+
+          findings.push({
+            ...finding,
+            guidelineId: matchedRule ? matchedRule.ruleCode : matchedFact ? matchedFact.factCode : "",
+            guidelineTitle: matchedRule
+              ? matchedRule.title
+              : matchedFact
+                ? matchedFact.sourceLabel
+                : "AI Heuristic Observation",
+            guidelineText: matchedRule
+              ? matchedRule.description
+              : matchedFact
+                ? matchedFact.claim
+                : "No established brand guideline or approved fact was cited for this observation.",
+            whyViolates: finding.message,
+            recommendedAction: finding.suggestion,
+            isGrounded: isGrounded ? "true" : "false",
+          });
         }
       }
     } catch {

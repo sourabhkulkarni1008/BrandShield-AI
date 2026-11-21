@@ -8,7 +8,7 @@ import { getReadableImageFindingCopy } from './lib/imageAuditCopy'
 const MIN_REVIEWER_OVERRIDE_LENGTH = 10
 
 type OverrideRequestDecision = 'ACCEPTED' | 'REJECTED'
-type Decision = 'APPROVED' | 'CHANGES_REQUESTED'
+type Decision = 'APPROVED' | 'CHANGES_REQUESTED' | 'REJECTED'
 
 interface Summary {
   id: string
@@ -32,6 +32,12 @@ interface Finding {
   ruleCode: string | null
   confidence: string | null
   isResolved: boolean
+  guidelineId?: string | null
+  guidelineTitle?: string | null
+  guidelineText?: string | null
+  whyViolates?: string | null
+  recommendedAction?: string | null
+  isGrounded?: string | boolean | null
 }
 
 interface Comment {
@@ -316,6 +322,11 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
       return
     }
 
+    if (status === 'REJECTED' && commentText.trim().length < 10) {
+      setError('Add a clear rejection rationale of at least 10 characters.')
+      return
+    }
+
     setError(null)
     setNotice(null)
     setPendingDecision(status)
@@ -338,6 +349,11 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
 
     if (status === 'CHANGES_REQUESTED' && commentText.trim().length < 10) {
       setError('Add a clear change request of at least 10 characters.')
+      return
+    }
+
+    if (status === 'REJECTED' && commentText.trim().length < 10) {
+      setError('Add a clear rejection rationale of at least 10 characters.')
       return
     }
 
@@ -373,9 +389,13 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
       setSelected(null)
       setCommentText('')
       setPendingDecision(null)
-      setNotice(status === 'APPROVED'
-        ? `"${title}" was approved.`
-        : `"${title}" was returned for changes.`)
+      setNotice(
+        status === 'APPROVED'
+          ? `"${title}" was approved.`
+          : status === 'REJECTED'
+            ? `"${title}" was rejected.`
+            : `"${title}" was returned for changes.`
+      )
       await loadQueue()
     } catch (err) {
       setPendingDecision(null)
@@ -396,7 +416,7 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
 
   const visibleQueue = queue.filter((item) => queueView === 'IN_REVIEW'
     ? item.status === 'IN_REVIEW'
-    : item.status === 'APPROVED' || item.status === 'CHANGES_REQUESTED' || item.status === 'DRAFT')
+    : item.status === 'APPROVED' || item.status === 'CHANGES_REQUESTED' || item.status === 'REJECTED' || item.status === 'DRAFT')
   const reviewCount = queue.filter((item) => item.status === 'IN_REVIEW').length
   const historyCount = queue.filter((item) => item.status !== 'IN_REVIEW').length
   const historyLabel = queue.some((item) => item.status === 'DRAFT') ? 'History & drafts' : 'Review history'
@@ -437,22 +457,37 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
             aria-labelledby="bf-decision-confirmation-title"
             aria-describedby="bf-decision-confirmation-description"
           >
-            <span className={`bf-decision-confirmation-mark ${pendingDecision === 'APPROVED' ? 'approve' : 'changes'}`} aria-hidden="true">
-              {pendingDecision === 'APPROVED' ? '✓' : '↺'}
+            <span
+              className={`bf-decision-confirmation-mark ${
+                pendingDecision === 'APPROVED'
+                  ? 'approve'
+                  : pendingDecision === 'REJECTED'
+                    ? 'reject'
+                    : 'changes'
+              }`}
+              aria-hidden="true"
+            >
+              {pendingDecision === 'APPROVED' ? '✓' : pendingDecision === 'REJECTED' ? '✕' : '↺'}
             </span>
             <h2 id="bf-decision-confirmation-title">
-              {pendingDecision === 'APPROVED' ? 'Approve this campaign?' : 'Request changes?'}
+              {pendingDecision === 'APPROVED'
+                ? 'Approve this campaign?'
+                : pendingDecision === 'REJECTED'
+                  ? 'Reject this campaign?'
+                  : 'Request changes?'}
             </h2>
             <p id="bf-decision-confirmation-description">
               {pendingDecision === 'APPROVED'
                 ? requiresReviewerOverride
                   ? `This will approve “${selected.title}” and record your reason against ${highRiskFindings.length} high-risk finding(s) and ${warningFindings.length} warning(s).`
                   : `This will mark “${selected.title}” as approved and complete the review.`
-                : `This will return “${selected.title}” to the creator so they can revise and resubmit it.`}
+                : pendingDecision === 'REJECTED'
+                  ? `This will formally reject “${selected.title}” and record your rationale. The creator will be notified to revise or withdraw.`
+                  : `This will return “${selected.title}” to the creator so they can revise and resubmit it.`}
             </p>
-            {pendingDecision === 'CHANGES_REQUESTED' && (
+            {(pendingDecision === 'CHANGES_REQUESTED' || pendingDecision === 'REJECTED') && (
               <div className="bf-decision-confirmation-note">
-                <strong>Feedback to the creator</strong>
+                <strong>{pendingDecision === 'REJECTED' ? 'Rejection rationale' : 'Feedback to the creator'}</strong>
                 <p>{commentText.trim()}</p>
               </div>
             )}
@@ -481,7 +516,13 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
               </button>
               <button
                 type="button"
-                className={pendingDecision === 'APPROVED' ? 'bf-btn-primary' : 'bf-review-request'}
+                className={
+                  pendingDecision === 'APPROVED'
+                    ? 'bf-btn-primary'
+                    : pendingDecision === 'REJECTED'
+                      ? 'bf-btn-reject-confirm'
+                      : 'bf-review-request'
+                }
                 disabled={decisionBusy}
                 onClick={() => void decide(pendingDecision)}
               >
@@ -489,7 +530,9 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
                   ? 'Saving…'
                   : pendingDecision === 'APPROVED'
                     ? 'Confirm Approval'
-                    : 'Confirm Request Changes'}
+                    : pendingDecision === 'REJECTED'
+                      ? 'Confirm Rejection'
+                      : 'Confirm Request Changes'}
               </button>
             </div>
           </section>
@@ -792,11 +835,31 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
                         {finding.severity}
                       </strong>
                       {finding.ruleCode && <code>{finding.ruleCode}</code>}
+                      {finding.isGrounded === 'false' ? (
+                        <span className="bf-rule-observation-badge">AI Observation</span>
+                      ) : finding.guidelineId || finding.ruleCode ? (
+                        <span className="bf-rule-grounded-badge">Grounded Guideline</span>
+                      ) : null}
                     </div>
                     <h4>{finding.title}</h4>
                     <p>{finding.message}</p>
-                    {finding.evidence && <p><b>Evidence:</b> {finding.evidence}</p>}
-                    {finding.suggestion && <p><b>Suggestion:</b> {finding.suggestion}</p>}
+                    {finding.guidelineText && (
+                      <div className="bf-review-guideline-quote">
+                        <span className="bf-evidence-label">Approved Guideline Reference ({finding.guidelineId || finding.ruleCode}):</span>
+                        <p>“{finding.guidelineText}”</p>
+                      </div>
+                    )}
+                    {finding.evidence && (
+                      <p>
+                        <b>Flagged evidence:</b> <mark className="bf-evidence-mark">“{finding.evidence}”</mark>
+                      </p>
+                    )}
+                    {finding.whyViolates && finding.whyViolates !== finding.message && (
+                      <p><b>Violation rationale:</b> {finding.whyViolates}</p>
+                    )}
+                    {(finding.recommendedAction || finding.suggestion) && (
+                      <p><b>Recommended action:</b> {finding.recommendedAction || finding.suggestion}</p>
+                    )}
                   </article>
                 ))}
               </section>
@@ -810,13 +873,20 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
                 {selected.comments.length === 0 ? (
                   <p className="bf-review-small">No comments yet. Comments and decision notes will be kept together here.</p>
                 ) : selected.comments.map((comment) => (
-                  <article className={`bf-review-comment${comment.body.startsWith('OVERRIDE REQUEST') ? ' bf-review-comment-override' : ''}${comment.body.startsWith('CHANGE REQUEST') ? ' bf-review-comment-request' : ''}${comment.body.startsWith('CREATOR UPDATE') ? ' bf-review-comment-update' : ''}`} key={comment.id}>
+                  <article className={`bf-review-comment${comment.body.startsWith('OVERRIDE REQUEST') ? ' bf-review-comment-override' : ''}${comment.body.startsWith('CHANGE REQUEST') ? ' bf-review-comment-request' : ''}${comment.body.startsWith('REJECTION') ? ' bf-review-comment-reject' : ''}${comment.body.startsWith('CREATOR UPDATE') ? ' bf-review-comment-update' : ''}`} key={comment.id}>
                     <div className="bf-review-comment-meta">
                       <strong>{comment.author?.name ?? 'User'}</strong>
                       <span>{comment.author?.role ?? ''}</span>
                       <time>{new Date(comment.createdAt).toLocaleString()}</time>
                     </div>
-                    {comment.body.startsWith('CREATOR UPDATE') ? (
+                    {comment.body.startsWith('REJECTION') ? (
+                      <>
+                        <span className="bf-rejection-badge">Campaign Rejected · Action Required</span>
+                        <div className="bf-rejection-content">
+                          <p>{comment.body.split('\n').slice(1).join('\n').trim()}</p>
+                        </div>
+                      </>
+                    ) : comment.body.startsWith('CREATOR UPDATE') ? (
                       <>
                         <span className="bf-creator-update-badge">Creator submission note</span>
                         <div className="bf-creator-update-content">
@@ -946,6 +1016,15 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
                     <div className="bf-review-decision-buttons">
                       <button className="bf-btn-secondary" type="submit" disabled={commentBusy || decisionBusy || !commentText.trim()}>
                         {commentBusy ? 'Posting…' : 'Post Comment'}
+                      </button>
+                      <button
+                        type="button"
+                        className="bf-review-reject"
+                        disabled={decisionBusy || commentText.trim().length < 10}
+                        onClick={() => openDecisionConfirmation('REJECTED')}
+                        title="Reject campaign with mandatory feedback"
+                      >
+                        {decisionBusy ? 'Saving…' : 'Reject Campaign'}
                       </button>
                       <button type="button" className="bf-review-request" disabled={decisionBusy || commentText.trim().length < 10} onClick={() => openDecisionConfirmation('CHANGES_REQUESTED')}>
                         {decisionBusy ? 'Saving…' : 'Request Changes'}

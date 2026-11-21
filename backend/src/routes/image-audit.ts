@@ -322,7 +322,7 @@ async function processImageAudit(req: Request, res: Response) {
     if (submission.creatorId !== req.authUser!.id) {
       return res.status(403).json({ error: "You do not own this saved draft." });
     }
-    if (submission.status !== "DRAFT" && submission.status !== "CHANGES_REQUESTED") {
+    if (submission.status !== "DRAFT" && submission.status !== "CHANGES_REQUESTED" && submission.status !== "REJECTED") {
       return res.status(409).json({ error: "Only drafts or submissions returned for changes can be re-audited." });
     }
     if (submission.brandProfileId !== requestedBrandProfileId) {

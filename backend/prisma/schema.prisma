@@ -18,6 +18,7 @@ enum SubmissionStatus {
   IN_REVIEW
   CHANGES_REQUESTED
   APPROVED
+  REJECTED
 }
 
 enum RuleCategory {

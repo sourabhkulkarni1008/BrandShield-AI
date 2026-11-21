@@ -65,6 +65,12 @@ interface RawAuditFinding {
   suggestedSpan?: string | null
   ruleCode: string
   confidence: string
+  guidelineId?: string | null
+  guidelineTitle?: string | null
+  guidelineText?: string | null
+  whyViolates?: string | null
+  recommendedAction?: string | null
+  isGrounded?: string | boolean | null
 }
 
 interface FindingMatch {
@@ -74,6 +80,12 @@ interface FindingMatch {
   suggestion: string
   confidence: string
   ruleCodes: string[]
+  guidelineId?: string | null
+  guidelineTitle?: string | null
+  guidelineText?: string | null
+  whyViolates?: string | null
+  recommendedAction?: string | null
+  isGrounded?: boolean
 }
 
 interface ConsolidatedFinding {
@@ -90,6 +102,12 @@ interface ConsolidatedFinding {
   confidences: string[]
   matches: FindingMatch[]
   mergedCount: number
+  guidelineId?: string | null
+  guidelineTitle?: string | null
+  guidelineText?: string | null
+  whyViolates?: string | null
+  recommendedAction?: string | null
+  isGrounded?: boolean
 }
 
 interface AuditApiResponse {
@@ -360,6 +378,7 @@ function consolidateFindings(
       })
     })
 
+    const isGrounded = item.isGrounded === true || item.isGrounded === 'true' || Boolean(item.guidelineId || item.ruleCode)
     const incomingMatch: FindingMatch = {
       evidence: trimmedEvidence,
       originalSpan: item.originalSpan?.trim() || null,
@@ -367,6 +386,12 @@ function consolidateFindings(
       suggestion: item.suggestion,
       confidence: item.confidence,
       ruleCodes: [item.ruleCode],
+      guidelineId: item.guidelineId ?? item.ruleCode ?? null,
+      guidelineTitle: item.guidelineTitle ?? null,
+      guidelineText: item.guidelineText ?? null,
+      whyViolates: item.whyViolates ?? item.message ?? null,
+      recommendedAction: item.recommendedAction ?? item.suggestion ?? null,
+      isGrounded,
     }
 
     if (!existingGroup) {
@@ -384,6 +409,12 @@ function consolidateFindings(
         confidences: [item.confidence],
         matches: trimmedEvidence ? [incomingMatch] : [],
         mergedCount: 1,
+        guidelineId: item.guidelineId ?? item.ruleCode ?? null,
+        guidelineTitle: item.guidelineTitle ?? null,
+        guidelineText: item.guidelineText ?? null,
+        whyViolates: item.whyViolates ?? item.message ?? null,
+        recommendedAction: item.recommendedAction ?? item.suggestion ?? null,
+        isGrounded,
       })
       continue
     }
@@ -542,6 +573,22 @@ export function App() {
     isError: boolean
   } | null>(null)
   const [auditedImageAltText, setAuditedImageAltText] = useState<string | null>(null)
+  const [rulebookHighlightRuleCode, setRulebookHighlightRuleCode] = useState<string | null>(null)
+  const [aiSuggestionModalOpen, setAiSuggestionModalOpen] = useState(false)
+  const [aiSuggestionData, setAiSuggestionData] = useState<{
+    originalContent: string
+    refinedContent: string
+    rationale: string
+    changes: Array<{
+      originalPhrase: string
+      suggestedPhrase: string
+      ruleCode?: string
+      reason: string
+    }>
+    privacyNote: string
+  } | null>(null)
+  const [editableSuggestionText, setEditableSuggestionText] = useState('')
+  const [isEditingSuggestion, setIsEditingSuggestion] = useState(false)
   const canReauditSavedImage = Boolean(editingSubmissionId && !imageFile && imagePreviewUrl)
   const [overrideTarget, setOverrideTarget] = useState<{ groupId: string; title: string; ruleCodes: string[]; evidences: string[] } | null>(null)
   const [overrideReason, setOverrideReason] = useState('')
@@ -1178,21 +1225,50 @@ export function App() {
         setRefineMessage(`No text changes were suggested.${privacyNote} Run Preflight Audit to verify the current copy.`)
         return
       }
-      setContent(data.refinedContent.trim())
-      setAuditResult(null)
-      setAuditedContent(null)
-      setAuditError(null)
-      setAuditRestoredFromSubmission(false)
-      setGuidanceCopyFeedback(null)
-      setSaveDraftError(null)
-      setSaveDraftMessage(null)
-      setRefineMessage(`Copy refined.${privacyNote} Review the wording, then run Preflight Audit before saving or submitting.`)
+      const suggestion = {
+        originalContent: content,
+        refinedContent: data.refinedContent.trim(),
+        rationale: (data as unknown as { rationale?: string }).rationale || 'Refined to address detected brand rule infractions while preserving core campaign intent.',
+        changes: Array.isArray((data as unknown as { changes?: Array<{ originalPhrase: string; suggestedPhrase: string; ruleCode?: string; reason: string }> }).changes)
+          ? (data as unknown as { changes: Array<{ originalPhrase: string; suggestedPhrase: string; ruleCode?: string; reason: string }> }).changes
+          : [],
+        privacyNote,
+      }
+      setAiSuggestionData(suggestion)
+      setEditableSuggestionText(data.refinedContent.trim())
+      setIsEditingSuggestion(false)
+      setAiSuggestionModalOpen(true)
     } catch (err) {
       setRefineError(err instanceof Error ? err.message : 'Could not refine copy.')
     } finally {
       setRefineBusy(false)
     }
   }
+
+  const handleAcceptAiSuggestion = useCallback(() => {
+    if (!editableSuggestionText.trim()) return
+    setContent(editableSuggestionText.trim())
+    setAuditResult(null)
+    setAuditedContent(null)
+    setAuditError(null)
+    setAuditRestoredFromSubmission(false)
+    setGuidanceCopyFeedback(null)
+    setSaveDraftError(null)
+    setSaveDraftMessage(null)
+    setAiSuggestionModalOpen(false)
+    setRefineMessage('AI suggestion accepted. Review the updated wording and run Preflight Audit before saving or submitting.')
+  }, [editableSuggestionText])
+
+  const handleRejectAiSuggestion = useCallback(() => {
+    setAiSuggestionModalOpen(false)
+    setRefineMessage('AI suggestion rejected. Original draft copy was preserved.')
+  }, [])
+
+  const handleNavigateToGuideline = useCallback((ruleCode: string | null | undefined) => {
+    if (!ruleCode) return
+    setRulebookHighlightRuleCode(ruleCode)
+    setActiveView('rulebook')
+  }, [])
 
 
 
@@ -2780,9 +2856,48 @@ export function App() {
                                               <span className="bf-source-meta">{match.confidence}</span>
                                             </div>
                                           </div>
+
+                                          {/* Feature 1: Evidence-Based Guideline Citation */}
+                                          <div className="bf-guideline-citation-box">
+                                            <div className="bf-guideline-citation-header">
+                                              <div className="bf-guideline-citation-tags">
+                                                <span className={match.isGrounded ? "bf-rule-grounded-badge" : "bf-rule-observation-badge"}>
+                                                  {match.isGrounded ? "Grounded Brand Guideline" : "AI Heuristic Observation"}
+                                                </span>
+                                                {(match.guidelineId || match.ruleCodes[0]) && (
+                                                  <code className="bf-rule-code-chip">{match.guidelineId || match.ruleCodes[0]}</code>
+                                                )}
+                                              </div>
+                                              {(match.guidelineId || match.ruleCodes[0]) && (
+                                                <button
+                                                  type="button"
+                                                  className="bf-btn-view-rulebook"
+                                                  onClick={() => handleNavigateToGuideline(match.guidelineId || match.ruleCodes[0])}
+                                                  title={`Navigate to ${match.guidelineId || match.ruleCodes[0]} in the Brand Rulebook`}
+                                                >
+                                                  View in Rulebook →
+                                                </button>
+                                              )}
+                                            </div>
+                                            {match.guidelineTitle && (
+                                              <strong className="bf-guideline-title">{match.guidelineTitle}</strong>
+                                            )}
+                                            {match.guidelineText && (
+                                              <div className="bf-guideline-quote">
+                                                <span className="bf-guideline-quote-label">Original Approved Guideline Text:</span>
+                                                <p>“{match.guidelineText}”</p>
+                                              </div>
+                                            )}
+                                            {match.whyViolates && match.whyViolates !== group.message && (
+                                              <p className="bf-guideline-why-violates">
+                                                <strong>Why this violates:</strong> {match.whyViolates}
+                                              </p>
+                                            )}
+                                          </div>
+
                                           <div className="bf-evidence-row">
                                             <span className="bf-evidence-label">Guidance:</span>
-                                            <span style={{ flex: 1, color: 'var(--text-heading)' }}>{match.suggestion || group.suggestion}</span>
+                                            <span style={{ flex: 1, color: 'var(--text-heading)' }}>{match.recommendedAction || match.suggestion || group.suggestion}</span>
                                           </div>
                                         </div>
 
@@ -2910,6 +3025,7 @@ export function App() {
             apiBaseUrl={API_BASE_URL}
             brandProfileId={BRAND_PROFILE_ID}
             onBrandLoaded={setBrandProfile}
+            highlightRuleCode={rulebookHighlightRuleCode}
           />
         ) : activeView === 'manager' && authSession.user.role === 'MANAGER' ? (
           <ManagerDashboard
@@ -2948,6 +3064,132 @@ export function App() {
             <p>{saveDraftMessage}</p>
           </div>
           <button type="button" className="bf-toast-dismiss" aria-label="Dismiss notification" onClick={() => setSaveDraftMessage(null)}>×</button>
+        </div>
+      )}
+      {aiSuggestionModalOpen && aiSuggestionData && (
+        <div
+          className="bf-decision-confirmation-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setAiSuggestionModalOpen(false)
+          }}
+        >
+          <section
+            className="bf-ai-suggestion-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bf-ai-suggestion-title"
+          >
+            <header className="bf-ai-suggestion-modal-header">
+              <div>
+                <span className="bf-ai-suggestion-eyebrow">✦ SMARTER AI CORRECTION ASSISTANT</span>
+                <h2 id="bf-ai-suggestion-title">Review AI Correction Suggestion</h2>
+                <p>
+                  Compare your original draft with the recommended revision before accepting or editing changes.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="bf-modal-close-btn"
+                aria-label="Close suggestion modal"
+                onClick={() => setAiSuggestionModalOpen(false)}
+              >
+                ✕
+              </button>
+            </header>
+
+            {/* AI Rationale Box */}
+            <div className="bf-ai-suggestion-rationale">
+              <strong>Compliance Rationale:</strong>
+              <p>{aiSuggestionData.rationale}</p>
+              {aiSuggestionData.privacyNote && (
+                <small className="bf-ai-suggestion-privacy-note">{aiSuggestionData.privacyNote}</small>
+              )}
+            </div>
+
+            {/* Side-by-side comparison grid */}
+            <div className="bf-suggestion-diff-grid">
+              <div className="bf-suggestion-diff-panel">
+                <div className="bf-suggestion-diff-panel-header">
+                  <span>ORIGINAL VERSION (PRESERVED)</span>
+                  <small>{aiSuggestionData.originalContent.length} chars</small>
+                </div>
+                <pre className="bf-suggestion-diff-content original">
+                  {aiSuggestionData.originalContent}
+                </pre>
+              </div>
+
+              <div className="bf-suggestion-diff-panel revised">
+                <div className="bf-suggestion-diff-panel-header">
+                  <span>SMARTER REVISION {isEditingSuggestion ? '· (EDITING)' : '· (AI GENERATED)'}</span>
+                  <button
+                    type="button"
+                    className="bf-btn-toggle-edit"
+                    onClick={() => setIsEditingSuggestion(!isEditingSuggestion)}
+                  >
+                    {isEditingSuggestion ? 'Done Editing' : '✎ Edit Suggestion'}
+                  </button>
+                </div>
+                {isEditingSuggestion ? (
+                  <textarea
+                    className="bf-suggestion-edit-textarea"
+                    rows={8}
+                    value={editableSuggestionText}
+                    onChange={(e) => setEditableSuggestionText(e.target.value)}
+                    placeholder="Fine-tune the AI suggestion before accepting…"
+                  />
+                ) : (
+                  <pre className="bf-suggestion-diff-content revised">
+                    {editableSuggestionText}
+                  </pre>
+                )}
+              </div>
+            </div>
+
+            {/* Modifications List */}
+            {aiSuggestionData.changes.length > 0 && (
+              <div className="bf-suggestion-changes-section">
+                <h3>Key Modifications ({aiSuggestionData.changes.length})</h3>
+                <ul className="bf-suggestion-changes-list">
+                  {aiSuggestionData.changes.map((item, index) => (
+                    <li key={`change-${index}`} className="bf-suggestion-change-item">
+                      <div className="bf-change-row">
+                        <span className="bf-change-del"><s>{item.originalPhrase}</s></span>
+                        <span className="bf-change-arrow">→</span>
+                        <span className="bf-change-ins">{item.suggestedPhrase}</span>
+                        {item.ruleCode && <span className="bf-rule-tag">{item.ruleCode}</span>}
+                      </div>
+                      <p className="bf-change-reason">{item.reason}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Action Footer */}
+            <footer className="bf-ai-suggestion-modal-footer">
+              <button
+                type="button"
+                className="bf-btn-secondary"
+                onClick={handleRejectAiSuggestion}
+              >
+                Reject Suggestion (Keep Original)
+              </button>
+              <button
+                type="button"
+                className="bf-btn-secondary"
+                onClick={() => setIsEditingSuggestion(!isEditingSuggestion)}
+              >
+                {isEditingSuggestion ? 'Preview Text' : 'Edit Before Accepting'}
+              </button>
+              <button
+                type="button"
+                className="bf-btn-primary bf-btn-accept-suggestion"
+                onClick={handleAcceptAiSuggestion}
+              >
+                ✓ Accept &amp; Apply to Editor
+              </button>
+            </footer>
+          </section>
         </div>
       )}
       {overrideTarget && (

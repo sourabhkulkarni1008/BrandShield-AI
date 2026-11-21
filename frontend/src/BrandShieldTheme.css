@@ -2381,4 +2381,526 @@ body {
   }
 }
 
+/* ==========================================================================
+   FEATURE 1: EVIDENCE-BASED VIOLATION CITATION BOX
+   ========================================================================== */
+.bf-guideline-citation-box {
+  margin: 10px 0 12px !important;
+  padding: 14px 16px !important;
+  background: rgba(8, 14, 26, 0.85) !important;
+  border: 1px solid rgba(0, 242, 254, 0.22) !important;
+  border-radius: 10px !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.bf-guideline-citation-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  margin-bottom: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.bf-guideline-citation-tags {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.bf-rule-grounded-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+}
+
+.bf-rule-observation-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+.bf-rule-code-chip {
+  padding: 2px 6px !important;
+  background: rgba(0, 242, 254, 0.12) !important;
+  color: #00f2fe !important;
+  border: 1px solid rgba(0, 242, 254, 0.25) !important;
+  border-radius: 4px !important;
+  font-family: var(--font-mono, monospace) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.bf-btn-view-rulebook {
+  background: transparent !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  border-radius: 6px !important;
+  padding: 3px 10px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.bf-btn-view-rulebook:hover {
+  background: rgba(56, 189, 248, 0.15) !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+  transform: translateX(2px) !important;
+}
+
+.bf-guideline-title {
+  display: block !important;
+  color: #f1f5f9 !important;
+  font-size: 13.5px !important;
+  font-weight: 650 !important;
+  margin-bottom: 6px !important;
+}
+
+.bf-guideline-quote {
+  background: rgba(13, 20, 36, 0.9) !important;
+  border-left: 3px solid #00f2fe !important;
+  border-radius: 0 6px 6px 0 !important;
+  padding: 8px 12px !important;
+  margin: 6px 0 8px !important;
+}
+
+.bf-guideline-quote-label {
+  display: block !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  margin-bottom: 2px !important;
+}
+
+.bf-guideline-quote p {
+  color: #e2e8f0 !important;
+  font-size: 12.5px !important;
+  font-style: italic !important;
+  line-height: 1.45 !important;
+  margin: 0 !important;
+}
+
+.bf-guideline-why-violates {
+  font-size: 12px !important;
+  color: #cbd5e1 !important;
+  line-height: 1.45 !important;
+  margin: 4px 0 !important;
+}
+
+.bf-guideline-why-violates strong {
+  color: #fb7185 !important;
+}
+
+.bf-guideline-action-hint {
+  font-size: 12px !important;
+  color: #cbd5e1 !important;
+  line-height: 1.45 !important;
+  margin: 4px 0 0 !important;
+}
+
+.bf-guideline-action-hint strong {
+  color: #34d399 !important;
+}
+
+/* Highlighted Rule Animation */
+.bf-rule-box.is-highlighted {
+  border-color: #00f2fe !important;
+  box-shadow: 0 0 20px rgba(0, 242, 254, 0.35) !important;
+  animation: bf-rule-glow 2s ease-in-out infinite alternate !important;
+}
+
+.bf-rule-highlight-badge {
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  background: rgba(0, 242, 254, 0.2) !important;
+  color: #00f2fe !important;
+  border: 1px solid #00f2fe !important;
+  animation: bf-pulse-soft 1.5s infinite !important;
+}
+
+@keyframes bf-rule-glow {
+  0% { box-shadow: 0 0 10px rgba(0, 242, 254, 0.2); }
+  100% { box-shadow: 0 0 25px rgba(0, 242, 254, 0.5); }
+}
+
+@keyframes bf-pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ==========================================================================
+   FEATURE 2: SMARTER AI CORRECTION SUGGESTION MODAL
+   ========================================================================== */
+.bf-ai-suggestion-modal {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 960px !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  background: rgba(11, 18, 33, 0.96) !important;
+  border: 1px solid rgba(0, 242, 254, 0.3) !important;
+  border-radius: 16px !important;
+  padding: 24px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 242, 254, 0.15) !important;
+  backdrop-filter: blur(24px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 18px !important;
+}
+
+.bf-ai-suggestion-modal-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding-bottom: 14px !important;
+}
+
+.bf-ai-suggestion-eyebrow {
+  display: block !important;
+  color: #00f2fe !important;
+  font-family: var(--font-mono, monospace) !important;
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.1em !important;
+  margin-bottom: 4px !important;
+}
+
+.bf-ai-suggestion-modal-header h2 {
+  color: #f8fafc !important;
+  font-size: 20px !important;
+  font-weight: 750 !important;
+  margin: 0 0 4px !important;
+}
+
+.bf-ai-suggestion-modal-header p {
+  color: #94a3b8 !important;
+  font-size: 13.5px !important;
+  margin: 0 !important;
+}
+
+.bf-modal-close-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #94a3b8 !important;
+  font-size: 20px !important;
+  cursor: pointer !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.bf-modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+.bf-ai-suggestion-rationale {
+  background: rgba(8, 14, 26, 0.85) !important;
+  border: 1px solid rgba(0, 242, 254, 0.25) !important;
+  border-radius: 10px !important;
+  padding: 12px 16px !important;
+}
+
+.bf-ai-suggestion-rationale strong {
+  display: block !important;
+  color: #38bdf8 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  margin-bottom: 4px !important;
+}
+
+.bf-ai-suggestion-rationale p {
+  color: #e2e8f0 !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+}
+
+.bf-ai-suggestion-privacy-note {
+  display: block !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  margin-top: 6px !important;
+}
+
+.bf-suggestion-diff-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 16px !important;
+}
+
+@media (max-width: 768px) {
+  .bf-suggestion-diff-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.bf-suggestion-diff-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  background: rgba(8, 14, 26, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+}
+
+.bf-suggestion-diff-panel.revised {
+  border-color: rgba(0, 242, 254, 0.3) !important;
+}
+
+.bf-suggestion-diff-panel-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 10px 14px !important;
+  background: rgba(13, 20, 36, 0.9) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.bf-suggestion-diff-panel-header span {
+  font-size: 11.5px !important;
+  font-weight: 750 !important;
+  color: #94a3b8 !important;
+  letter-spacing: 0.05em !important;
+}
+
+.bf-suggestion-diff-panel.revised .bf-suggestion-diff-panel-header span {
+  color: #00f2fe !important;
+}
+
+.bf-btn-toggle-edit {
+  background: rgba(0, 242, 254, 0.12) !important;
+  border: 1px solid rgba(0, 242, 254, 0.3) !important;
+  color: #00f2fe !important;
+  padding: 3px 8px !important;
+  border-radius: 5px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.bf-btn-toggle-edit:hover {
+  background: rgba(0, 242, 254, 0.25) !important;
+  color: #ffffff !important;
+}
+
+.bf-suggestion-diff-content {
+  padding: 14px !important;
+  margin: 0 !important;
+  font-family: inherit !important;
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+  color: #e2e8f0 !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  min-height: 160px !important;
+}
+
+.bf-suggestion-diff-content.original {
+  background: rgba(15, 23, 42, 0.5) !important;
+  color: #94a3b8 !important;
+}
+
+.bf-suggestion-diff-content.revised {
+  background: rgba(8, 14, 26, 0.9) !important;
+  color: #f8fafc !important;
+}
+
+.bf-suggestion-edit-textarea {
+  width: 100% !important;
+  min-height: 160px !important;
+  padding: 14px !important;
+  background: #060b14 !important;
+  border: none !important;
+  color: #00f2fe !important;
+  font-family: inherit !important;
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+  resize: vertical !important;
+  outline: none !important;
+}
+
+.bf-suggestion-changes-section {
+  background: rgba(8, 14, 26, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 10px !important;
+  padding: 14px !important;
+}
+
+.bf-suggestion-changes-section h3 {
+  color: #f1f5f9 !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  margin: 0 0 10px !important;
+}
+
+.bf-suggestion-changes-list {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.bf-suggestion-change-item {
+  background: rgba(13, 20, 36, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+}
+
+.bf-change-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  font-size: 13px !important;
+}
+
+.bf-change-del {
+  color: #fb7185 !important;
+}
+
+.bf-change-arrow {
+  color: #64748b !important;
+  font-weight: 700 !important;
+}
+
+.bf-change-ins {
+  color: #34d399 !important;
+  font-weight: 600 !important;
+}
+
+.bf-change-reason {
+  color: #94a3b8 !important;
+  font-size: 12px !important;
+  margin: 4px 0 0 !important;
+}
+
+.bf-ai-suggestion-modal-footer {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding-top: 16px !important;
+  flex-wrap: wrap !important;
+}
+
+.bf-btn-accept-suggestion {
+  background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%) !important;
+  color: #030712 !important;
+  font-weight: 750 !important;
+  padding: 8px 20px !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(0, 242, 254, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.bf-btn-accept-suggestion:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 22px rgba(0, 242, 254, 0.45) !important;
+}
+
+/* ==========================================================================
+   FEATURE 3: REVIEWER REJECTION & WORKFLOW STYLES
+   ========================================================================== */
+.bf-review-reject {
+  background: rgba(244, 63, 94, 0.15) !important;
+  color: #fb7185 !important;
+  border: 1px solid rgba(244, 63, 94, 0.35) !important;
+  padding: 8px 18px !important;
+  border-radius: 8px !important;
+  font-weight: 650 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.bf-review-reject:hover:not(:disabled) {
+  background: rgba(244, 63, 94, 0.3) !important;
+  border-color: #f43f5e !important;
+  color: #ffffff !important;
+}
+
+.bf-btn-reject-confirm {
+  background: #e11d48 !important;
+  color: #ffffff !important;
+  border: 1px solid #f43f5e !important;
+  padding: 8px 20px !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+
+.bf-btn-reject-confirm:hover {
+  background: #be123c !important;
+}
+
+.bf-decision-confirmation-mark.reject {
+  background: rgba(244, 63, 94, 0.2) !important;
+  color: #fb7185 !important;
+  border: 1px solid rgba(244, 63, 94, 0.4) !important;
+}
+
+.bf-rejection-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 3px 10px !important;
+  border-radius: 4px !important;
+  font-size: 11.5px !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  background: rgba(244, 63, 94, 0.18) !important;
+  color: #fb7185 !important;
+  border: 1px solid rgba(244, 63, 94, 0.4) !important;
+  margin-bottom: 8px !important;
+}
+
+.bf-rejection-content {
+  background: rgba(244, 63, 94, 0.08) !important;
+  border-left: 3px solid #f43f5e !important;
+  padding: 10px 14px !important;
+  border-radius: 0 8px 8px 0 !important;
+}
+
+.bf-rejection-content p {
+  color: #fecdd3 !important;
+  margin: 0 !important;
+  font-size: 13.5px !important;
+  line-height: 1.5 !important;
+}
+
+.bf-manager-status.rejected,
+.bf-saved-status.rejected {
+  background: rgba(244, 63, 94, 0.15) !important;
+  color: #fb7185 !important;
+  border: 1px solid rgba(244, 63, 94, 0.3) !important;
+}
+
+
 

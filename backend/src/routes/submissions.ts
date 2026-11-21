@@ -883,7 +883,7 @@ submissionsRouter.patch(
       if (current.creatorId !== req.authUser!.id) {
         return res.status(403).json({ error: "You do not own this submission." });
       }
-      if (current.status !== "DRAFT" && current.status !== "CHANGES_REQUESTED") {
+      if (current.status !== "DRAFT" && current.status !== "CHANGES_REQUESTED" && current.status !== "REJECTED") {
         return res.status(409).json({ error: "Only drafts or submissions returned for changes can be edited." });
       }
 
@@ -1065,7 +1065,7 @@ submissionsRouter.post(
       if (current.creatorId !== req.authUser!.id) {
         return res.status(403).json({ error: "You do not own this submission." });
       }
-      if (current.status !== "DRAFT" && current.status !== "CHANGES_REQUESTED") {
+      if (current.status !== "DRAFT" && current.status !== "CHANGES_REQUESTED" && current.status !== "REJECTED") {
         return res.status(409).json({ error: "Only drafts or returned submissions can be submitted for review." });
       }
 
@@ -1345,9 +1345,11 @@ submissionsRouter.post(
             data: {
               body: status === "CHANGES_REQUESTED"
                 ? `CHANGE REQUEST\n${note.trim()}`
-                : approvalRequiresOverride && approvalReleaseGate && note
-                  ? formatReviewerOverrideComment(note, approvalReleaseGate)
-                  : note.trim(),
+                : status === "REJECTED"
+                  ? `REJECTION\n${note.trim()}`
+                  : approvalRequiresOverride && approvalReleaseGate && note
+                    ? formatReviewerOverrideComment(note, approvalReleaseGate)
+                    : note.trim(),
               submissionId: current.id,
               authorId: req.authUser!.id,
             },

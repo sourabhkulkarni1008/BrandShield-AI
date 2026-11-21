@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 interface SubmissionSummary {
   id: string
   title: string
-  status: 'DRAFT' | 'IN_REVIEW' | 'CHANGES_REQUESTED' | 'APPROVED' | string
+  status: 'DRAFT' | 'IN_REVIEW' | 'CHANGES_REQUESTED' | 'APPROVED' | 'REJECTED' | string
   createdAt: string
   updatedAt: string
   brandProfile?: { id: string; name: string } | null
@@ -53,6 +53,7 @@ const STATUS_META: Record<string, { label: string; className: string }> = {
   IN_REVIEW: { label: 'In review', className: 'review' },
   CHANGES_REQUESTED: { label: 'Changes requested', className: 'changes' },
   APPROVED: { label: 'Approved', className: 'approved' },
+  REJECTED: { label: 'Rejected', className: 'rejected' },
 }
 
 function dateLabel(value: string) {
@@ -146,6 +147,7 @@ export default function ManagerDashboard({
     inReview: submissions.filter((item) => item.status === 'IN_REVIEW').length,
     changesRequested: submissions.filter((item) => item.status === 'CHANGES_REQUESTED').length,
     approved: submissions.filter((item) => item.status === 'APPROVED').length,
+    rejected: submissions.filter((item) => item.status === 'REJECTED').length,
   }), [submissions])
 
   const filtered = useMemo(() => {
@@ -221,6 +223,11 @@ export default function ManagerDashboard({
           <span className="bf-manager-metric-label">Approved</span>
           <strong>{loading ? '—' : counts.approved}</strong>
           <span className="bf-manager-metric-note">Cleared by review</span>
+        </article>
+        <article className="bf-manager-metric">
+          <span className="bf-manager-metric-label">Rejected</span>
+          <strong>{loading ? '—' : counts.rejected}</strong>
+          <span className="bf-manager-metric-note">Action required</span>
         </article>
       </section>
 
@@ -339,6 +346,7 @@ export default function ManagerDashboard({
               <option value="IN_REVIEW">In review</option>
               <option value="CHANGES_REQUESTED">Changes requested</option>
               <option value="APPROVED">Approved</option>
+              <option value="REJECTED">Rejected</option>
             </select>
           </label>
         </div>

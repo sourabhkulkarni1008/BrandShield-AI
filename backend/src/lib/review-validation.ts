@@ -1,4 +1,4 @@
-export type ReviewDecisionStatus = "APPROVED" | "CHANGES_REQUESTED";
+export type ReviewDecisionStatus = "APPROVED" | "CHANGES_REQUESTED" | "REJECTED";
 
 export const MIN_REVIEW_NOTE_LENGTH = 10;
 export const MAX_REVIEW_NOTE_LENGTH = 2000;
@@ -39,8 +39,8 @@ export function validateReviewDecision(
   status: unknown,
   note: unknown,
 ): ReviewDecisionValidation {
-  if (status !== "APPROVED" && status !== "CHANGES_REQUESTED") {
-    return { valid: false, error: "Status must be APPROVED or CHANGES_REQUESTED." };
+  if (status !== "APPROVED" && status !== "CHANGES_REQUESTED" && status !== "REJECTED") {
+    return { valid: false, error: "Status must be APPROVED, CHANGES_REQUESTED, or REJECTED." };
   }
 
   if (note !== undefined && (typeof note !== "string" || note.length > MAX_REVIEW_NOTE_LENGTH)) {
@@ -48,12 +48,14 @@ export function validateReviewDecision(
   }
 
   if (
-    status === "CHANGES_REQUESTED" &&
+    (status === "CHANGES_REQUESTED" || status === "REJECTED") &&
     (typeof note !== "string" || note.trim().length < MIN_REVIEW_NOTE_LENGTH)
   ) {
     return {
       valid: false,
-      error: `A reason of at least ${MIN_REVIEW_NOTE_LENGTH} characters is required when requesting changes.`,
+      error: `A reason of at least ${MIN_REVIEW_NOTE_LENGTH} characters is required when ${
+        status === "REJECTED" ? "rejecting" : "requesting changes"
+      }.`,
     };
   }
 

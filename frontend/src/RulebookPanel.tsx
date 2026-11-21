@@ -57,6 +57,7 @@ interface RulebookPanelProps {
   apiBaseUrl: string
   brandProfileId: string
   onBrandLoaded: (brand: BrandProfileData) => void
+  highlightRuleCode?: string | null
 }
 
 interface RuleDraft {
@@ -146,6 +147,7 @@ export default function RulebookPanel({
   apiBaseUrl,
   brandProfileId,
   onBrandLoaded,
+  highlightRuleCode = null,
 }: RulebookPanelProps) {
   const basePath = `/api/brands/${encodeURIComponent(brandProfileId)}`
 
@@ -354,6 +356,18 @@ export default function RulebookPanel({
       setIsBusy(false)
     }
   }
+
+  useEffect(() => {
+    if (highlightRuleCode) {
+      const timer = window.setTimeout(() => {
+        const el = document.getElementById(`rule-${highlightRuleCode}`)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 100)
+      return () => window.clearTimeout(timer)
+    }
+  }, [highlightRuleCode, brand?.rules])
 
   const handleEditRule = (rule: RulebookRule) => {
     setEditingRuleId(rule.id)
@@ -815,37 +829,49 @@ export default function RulebookPanel({
                   </form>
 
                   <div className="bf-rulebook-record-list">
-                    {brand.rules.map((rule) => (
-                      <article className="bf-rule-box" key={rule.id}>
-                        <div className="bf-finding-meta">
-                          <span className="bf-rule-tag">{rule.ruleCode}</span>
-                          <span className="bf-source-meta">{rule.category}</span>
-                        </div>
-                        <h3 className="bf-finding-title">{rule.title}</h3>
-                        <p className="bf-finding-desc">{rule.description}</p>
-                        {rule.pattern && (
-                          <code className="bf-rulebook-pattern">{rule.pattern}</code>
-                        )}
-                        <div className="bf-rulebook-item-actions">
-                          <button
-                            className="bf-btn-secondary"
-                            type="button"
-                            onClick={() => handleEditRule(rule)}
-                            disabled={isBusy}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="bf-btn-secondary"
-                            type="button"
-                            onClick={() => void handleDeleteRule(rule)}
-                            disabled={isBusy}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </article>
-                    ))}
+                    {brand.rules.map((rule) => {
+                      const isHighlighted = Boolean(
+                        highlightRuleCode && rule.ruleCode.toLowerCase() === highlightRuleCode.toLowerCase()
+                      )
+                      return (
+                        <article
+                          id={`rule-${rule.ruleCode}`}
+                          className={`bf-rule-box ${isHighlighted ? 'is-highlighted' : ''}`}
+                          key={rule.id}
+                        >
+                          <div className="bf-finding-meta">
+                            <span className="bf-rule-tag">{rule.ruleCode}</span>
+                            <span className="bf-source-meta">{rule.category}</span>
+                            {isHighlighted && (
+                              <span className="bf-rule-highlight-badge">Navigated Guideline</span>
+                            )}
+                          </div>
+                          <h3 className="bf-finding-title">{rule.title}</h3>
+                          <p className="bf-finding-desc">{rule.description}</p>
+                          {rule.pattern && (
+                            <code className="bf-rulebook-pattern">{rule.pattern}</code>
+                          )}
+                          <div className="bf-rulebook-item-actions">
+                            <button
+                              className="bf-btn-secondary"
+                              type="button"
+                              onClick={() => handleEditRule(rule)}
+                              disabled={isBusy}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="bf-btn-secondary"
+                              type="button"
+                              onClick={() => void handleDeleteRule(rule)}
+                              disabled={isBusy}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </article>
+                      )
+                    })}
                   </div>
                 </div>
               </section>
