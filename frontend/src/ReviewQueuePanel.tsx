@@ -102,7 +102,7 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
 
   const gateFindingCandidates = selected
     ? [
-        ...selected.findings,
+        ...(selected.findings ?? []),
         ...(selected.imageAuditData?.findings ?? []),
       ]
     : []
@@ -570,7 +570,7 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
               disabled={openingId !== null || decisionBusy}
               onClick={() => void openSubmission(item)}
             >
-              <span className="bf-review-queue-status">{item.status.replace(/_/g, ' ')} · {item._count.findings} findings · {item._count.comments} comments</span>
+              <span className="bf-review-queue-status">{item.status.replace(/_/g, ' ')} · {item._count?.findings ?? 0} findings · {item._count?.comments ?? 0} comments</span>
               <strong>{item.title}</strong>
               <span className="bf-review-small">
                 {item.creator?.name ?? 'Creator'} · {item.brandProfile?.name ?? 'Brand'}
@@ -613,7 +613,7 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
                 <p>
                   {selected.creator?.name ?? 'Creator'}
                   {selected.brandProfile?.name ? ` · ${selected.brandProfile.name}` : ''}
-                  {' · '}{selected.revisions.length} revision(s)
+                  {' · '}{(selected.revisions ?? []).length} revision(s)
                 </p>
               </header>
 
@@ -670,7 +670,7 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
               </section>
 
               <CampaignChangeIntelligence
-                revisions={selected.revisions}
+                revisions={selected.revisions ?? []}
                 currentContent={selected.contentText}
                 currentImageUrl={selected.imageUrl ?? null}
                 currentImagePublicId={selected.imagePublicId}
@@ -824,10 +824,10 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
               )}
 
               <section className="bf-review-section">
-                <h3>Saved findings ({selected.findings.length})</h3>
-                {selected.findings.length === 0 ? (
+                <h3>Saved findings ({(selected.findings ?? []).length})</h3>
+                {(selected.findings ?? []).length === 0 ? (
                   <p className="bf-review-small">No findings were saved.</p>
-                ) : selected.findings.map((finding) => (
+                ) : (selected.findings ?? []).map((finding) => (
                   <article className="bf-review-finding" key={finding.id}>
                     <div className="bf-review-finding-top">
                       <span>{finding.category}</span>
@@ -869,10 +869,10 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
               )}
 
               <section className="bf-review-section">
-                <h3>Comments &amp; activity ({selected.comments.length})</h3>
-                {selected.comments.length === 0 ? (
+                <h3>Comments &amp; activity ({(selected.comments ?? []).length})</h3>
+                {(selected.comments ?? []).length === 0 ? (
                   <p className="bf-review-small">No comments yet. Comments and decision notes will be kept together here.</p>
-                ) : selected.comments.map((comment) => (
+                ) : (selected.comments ?? []).map((comment) => (
                   <article className={`bf-review-comment${comment.body.startsWith('OVERRIDE REQUEST') ? ' bf-review-comment-override' : ''}${comment.body.startsWith('CHANGE REQUEST') ? ' bf-review-comment-request' : ''}${comment.body.startsWith('REJECTION') ? ' bf-review-comment-reject' : ''}${comment.body.startsWith('CREATOR UPDATE') ? ' bf-review-comment-update' : ''}`} key={comment.id}>
                     <div className="bf-review-comment-meta">
                       <strong>{comment.author?.name ?? 'User'}</strong>

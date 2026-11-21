@@ -524,7 +524,7 @@ export default function SavedSubmissionsPanel({
                     </div>
                     <p className="bf-saved-meta">Updated {new Date(item.updatedAt).toLocaleString()}</p>
                     <div className="bf-saved-counts">
-                      <span>{item._count.findings} findings</span>
+                      <span>{item._count?.findings ?? 0} findings</span>
                       <button
                         type="button"
                         className="bf-saved-discussion-link"
@@ -533,9 +533,9 @@ export default function SavedSubmissionsPanel({
                       >
                         {discussionLoadingId === item.id
                           ? 'Loading discussion…'
-                          : `View discussion (${item._count.comments})`}
+                          : `View discussion (${item._count?.comments ?? 0})`}
                       </button>
-                      <span>{item._count.revisions} revisions</span>
+                      <span>{item._count?.revisions ?? 0} revisions</span>
                     </div>
 
                     {editable && !isEditing && (

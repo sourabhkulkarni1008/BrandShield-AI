@@ -207,6 +207,45 @@ export const inMemoryUsers: any[] = [
 
 export const inMemoryReceipts = new Map<string, any>();
 
+const DEFAULT_FINDINGS = [
+  {
+    id: "f-campa-01",
+    category: "TONE",
+    severity: "WARNING",
+    title: "Unverified superlative claim",
+    message: "The term 'BEST' is an unverified superlative claim contrary to brand guidelines.",
+    evidence: "BEST cola",
+    suggestion: "Use approved brand slogan 'The Great Indian Taste'.",
+    ruleCode: "TONE-01",
+    confidence: "Deterministic Match",
+    isResolved: false,
+    guidelineId: "TONE-01",
+    guidelineTitle: "Campa Cola Tone & Voice Guidelines",
+    guidelineText: "Maintain an energetic, proud Indian celebration tone. Avoid absolute superlatives like 'number one' or 'best' unless certified.",
+    whyViolates: "Uses superlative 'BEST' without third-party comparative audit verification.",
+    recommendedAction: "Replace 'BEST' with 'authentic' or 'heritage'.",
+    isGrounded: true,
+  },
+  {
+    id: "f-campa-02",
+    category: "CLAIM",
+    severity: "ERROR",
+    title: "Unapproved zero calorie claim",
+    message: "Zero calorie claims are unverified for standard Campa Cola 500ml.",
+    evidence: "ZERO calories",
+    suggestion: "Refer to approved nutritional facts database (FACT-04).",
+    ruleCode: "CLAIM-01",
+    confidence: "Deterministic Match",
+    isResolved: false,
+    guidelineId: "CLAIM-01",
+    guidelineTitle: "Nutritional Claim Fact Verification",
+    guidelineText: "All nutritional facts and pricing claims must strictly align with the approved facts database.",
+    whyViolates: "Standard Campa Cola contains cane sugar; zero calories is factually inaccurate.",
+    recommendedAction: "Remove 'ZERO calories' claim from marketing copy.",
+    isGrounded: true,
+  },
+];
+
 export const inMemorySubmissions = new Map<string, any>([
   [
     "campa-sub-01",
@@ -228,6 +267,20 @@ export const inMemorySubmissions = new Map<string, any>([
       creator: inMemoryUsers[0],
       reviewer: null,
       comments: [],
+      findings: DEFAULT_FINDINGS,
+      revisions: [
+        {
+          id: "rev-campa-01-1",
+          version: 1,
+          createdAt: new Date(Date.now() - 3600000).toISOString(),
+          contentText:
+            "The BEST cola in India! Our Campa Cola 500ml bottle has ZERO calories and guarantees maximum energy for every celebration. Now only ₹5 at your nearest store.",
+          imageAltText: "Chilled 500ml bottle of Campa Cola on ice with classic red wave branding and Great Indian Taste slogan",
+          imageUrl: "/campacola-campaign.png",
+          imagePublicId: "inline-campa-01",
+        },
+      ],
+      _count: { findings: 2, comments: 0, revisions: 1 },
     },
   ],
   [
@@ -249,6 +302,19 @@ export const inMemorySubmissions = new Map<string, any>([
       updatedAt: new Date(),
       creator: inMemoryUsers[0],
       reviewer: inMemoryUsers[1],
+      findings: [DEFAULT_FINDINGS[0]],
+      revisions: [
+        {
+          id: "rev-campa-02-1",
+          version: 1,
+          createdAt: new Date(Date.now() - 7200000).toISOString(),
+          contentText:
+            "Taste the sunshine! Campa Orange gives you authentic orange flavor with 100% natural fruit juice. Unmatched citrus energy in every 500ml sip for only ₹15.",
+          imageAltText: "Campa Orange sparkling beverage bottle in sunlit summer background",
+          imageUrl: "/campacola-campaign.png",
+          imagePublicId: "inline-campa-02",
+        },
+      ],
       comments: [
         {
           id: "cmt-1",
@@ -259,6 +325,7 @@ export const inMemorySubmissions = new Map<string, any>([
           author: inMemoryUsers[1],
         },
       ],
+      _count: { findings: 1, comments: 1, revisions: 1 },
     },
   ],
   [
@@ -281,6 +348,20 @@ export const inMemorySubmissions = new Map<string, any>([
       creator: inMemoryUsers[0],
       reviewer: inMemoryUsers[1],
       comments: [],
+      findings: [],
+      revisions: [
+        {
+          id: "rev-campa-03-1",
+          version: 1,
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+          contentText:
+            "Refresh your celebrations with the classic taste of Campa Cola, bottled by Reliance Consumer Products Ltd. Best served chilled between 4°C and 8°C. 500ml bottle at MRP ₹20.",
+          imageAltText: "Official Campa Cola 500ml bottle banner with verified high-contrast typography and authentic wave mark",
+          imageUrl: "/campacola-campaign.png",
+          imagePublicId: "inline-campa-03",
+        },
+      ],
+      _count: { findings: 0, comments: 0, revisions: 1 },
     },
   ],
 ]);
@@ -451,11 +532,32 @@ export function createFallbackPrismaClient() {
         const id = args?.where?.id;
         const sub = inMemorySubmissions.get(id);
         if (!sub) return null;
+        const findings = sub.findings ?? DEFAULT_FINDINGS;
+        const comments = Array.from(inMemoryComments.values()).filter((c) => c.submissionId === id);
+        const revisions = sub.revisions ?? [
+          {
+            id: `rev-${sub.id}-1`,
+            version: 1,
+            createdAt: sub.createdAt ? new Date(sub.createdAt).toISOString() : new Date().toISOString(),
+            contentText: sub.contentText,
+            imageAltText: sub.imageAltText ?? null,
+            imageUrl: sub.imageUrl ?? null,
+            imagePublicId: sub.imagePublicId ?? null,
+          },
+        ];
         return {
           ...sub,
+          brandProfile: { id: inMemoryBrand.id, name: inMemoryBrand.name },
           creator: inMemoryUsers.find((u) => u.id === sub.creatorId) ?? inMemoryUsers[0],
           reviewer: sub.reviewerId ? inMemoryUsers.find((u) => u.id === sub.reviewerId) : null,
-          comments: Array.from(inMemoryComments.values()).filter((c) => c.submissionId === id),
+          findings,
+          comments: sub.comments?.length ? sub.comments : comments,
+          revisions,
+          _count: {
+            findings: findings.length,
+            comments: (sub.comments?.length ? sub.comments : comments).length,
+            revisions: revisions.length,
+          },
         };
       },
       findMany: async (args: any) => {
@@ -473,11 +575,35 @@ export function createFallbackPrismaClient() {
             list = list.filter((s) => args.where.status.in.includes(s.status));
           }
         }
-        return list.map((sub) => ({
-          ...sub,
-          creator: inMemoryUsers.find((u) => u.id === sub.creatorId) ?? inMemoryUsers[0],
-          reviewer: sub.reviewerId ? inMemoryUsers.find((u) => u.id === sub.reviewerId) : null,
-        }));
+        return list.map((sub) => {
+          const findings = sub.findings ?? DEFAULT_FINDINGS;
+          const comments = Array.from(inMemoryComments.values()).filter((c) => c.submissionId === sub.id);
+          const revisions = sub.revisions ?? [
+            {
+              id: `rev-${sub.id}-1`,
+              version: 1,
+              createdAt: sub.createdAt ? new Date(sub.createdAt).toISOString() : new Date().toISOString(),
+              contentText: sub.contentText,
+              imageAltText: sub.imageAltText ?? null,
+              imageUrl: sub.imageUrl ?? null,
+              imagePublicId: sub.imagePublicId ?? null,
+            },
+          ];
+          return {
+            ...sub,
+            brandProfile: { id: inMemoryBrand.id, name: inMemoryBrand.name },
+            creator: inMemoryUsers.find((u) => u.id === sub.creatorId) ?? inMemoryUsers[0],
+            reviewer: sub.reviewerId ? inMemoryUsers.find((u) => u.id === sub.reviewerId) : null,
+            findings,
+            comments: sub.comments?.length ? sub.comments : comments,
+            revisions,
+            _count: {
+              findings: findings.length,
+              comments: (sub.comments?.length ? sub.comments : comments).length,
+              revisions: revisions.length,
+            },
+          };
+        });
       },
       create: async (args: any) => {
         const id = `sub-${Date.now()}`;
@@ -486,10 +612,25 @@ export function createFallbackPrismaClient() {
           ...args.data,
           createdAt: new Date(),
           updatedAt: new Date(),
+          findings: args.data?.findings ?? [],
+          comments: [],
+          revisions: [
+            {
+              id: `rev-${id}-1`,
+              version: 1,
+              createdAt: new Date().toISOString(),
+              contentText: args.data?.contentText ?? "",
+              imageAltText: args.data?.imageAltText ?? null,
+              imageUrl: args.data?.imageUrl ?? null,
+              imagePublicId: args.data?.imagePublicId ?? null,
+            },
+          ],
+          _count: { findings: (args.data?.findings ?? []).length, comments: 0, revisions: 1 },
         };
         inMemorySubmissions.set(id, newSub);
         return {
           ...newSub,
+          brandProfile: { id: inMemoryBrand.id, name: inMemoryBrand.name },
           creator: inMemoryUsers.find((u) => u.id === newSub.creatorId) ?? inMemoryUsers[0],
         };
       },

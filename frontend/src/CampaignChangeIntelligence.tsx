@@ -78,21 +78,23 @@ interface Props {
 }
 
 export default function CampaignChangeIntelligence({
-  revisions,
-  currentContent,
+  revisions = [],
+  currentContent = '',
   currentImageUrl,
   currentImagePublicId,
   currentImageAltText,
 }: Props) {
-  const previous = revisions[1]
-  const latest = revisions[0]
+  const safeRevisions = revisions ?? []
+  const previous = safeRevisions[1]
+  const latest = safeRevisions[0]
   const previousContent = previous?.contentText
+  const safeContent = currentContent ?? ''
 
   const diff = useMemo(
     () => previousContent !== undefined
-      ? buildWordDiff(previousContent, currentContent)
+      ? buildWordDiff(previousContent, safeContent)
       : null,
-    [previousContent, currentContent],
+    [previousContent, safeContent],
   )
   const altTextChanged = previous
     ? (previous.imageAltText ?? '') !== (currentImageAltText ?? '')
