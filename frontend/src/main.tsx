@@ -5,8 +5,8 @@ import './index.css'
 import App from './App.tsx'
 import ReleasePassportVerificationPage from './ReleasePassportVerificationPage'
 
-class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
-  constructor(props: { children: ReactNode }) {
+export class ErrorBoundary extends Component<{ children: ReactNode; fallbackTitle?: string }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: ReactNode; fallbackTitle?: string }) {
     super(props)
     this.state = { hasError: false, error: null }
   }
@@ -23,17 +23,18 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
     if (this.state.hasError) {
       return (
         <div style={{
-          minHeight: '100vh',
+          minHeight: '400px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#0a0e17',
+          background: 'transparent',
           color: '#e2e8f0',
           fontFamily: 'Inter, system-ui, sans-serif',
           padding: '2rem',
         }}>
           <div style={{
-            maxWidth: '520px',
+            maxWidth: '560px',
+            width: '100%',
             background: '#131b2e',
             border: '1px solid rgba(239, 68, 68, 0.4)',
             borderRadius: '12px',
@@ -54,14 +55,34 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
               fontSize: '24px',
               fontWeight: 'bold',
             }}>!</div>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#f8fafc' }}>Review Dashboard Notice</h2>
-            <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#f8fafc' }}>
+              {this.props.fallbackTitle || 'Review Dashboard Notice'}
+            </h2>
+            <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1rem', lineHeight: '1.5' }}>
               The review queue encountered a state transition glitch. Your session and drafts are preserved.
             </p>
+            {this.state.error && (
+              <pre style={{
+                textAlign: 'left',
+                background: '#090d16',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                padding: '0.75rem',
+                borderRadius: '6px',
+                fontSize: '0.75rem',
+                color: '#f87171',
+                overflowX: 'auto',
+                marginBottom: '1.5rem',
+                maxHeight: '120px',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}>
+                {this.state.error.message}
+              </pre>
+            )}
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
               <button
                 type="button"
-                onClick={() => { window.location.href = '/' }}
+                onClick={() => { this.setState({ hasError: false, error: null }); window.location.href = '/' }}
                 style={{
                   padding: '0.6rem 1.2rem',
                   borderRadius: '6px',
@@ -76,7 +97,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
               </button>
               <button
                 type="button"
-                onClick={() => { window.location.reload() }}
+                onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload() }}
                 style={{
                   padding: '0.6rem 1.2rem',
                   borderRadius: '6px',

@@ -48,8 +48,10 @@ interface Comment {
   author?: { id: string; name: string; role: string; email: string }
 }
 
-function findOverrideDecisionRecord(comments: Comment[], requestId: string) {
+function findOverrideDecisionRecord(comments: Comment[] | undefined, requestId: string) {
+  if (!Array.isArray(comments)) return undefined
   return comments.find((comment) =>
+    typeof comment?.body === 'string' &&
     comment.body.startsWith('OVERRIDE DECISION\n') &&
     comment.body.split('\n').includes(`Request ID: ${requestId}`),
   )
@@ -107,17 +109,19 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
       ]
     : []
   const releaseGateFindings = gateFindingCandidates.filter((finding, index, all) => {
-    if (finding.severity !== 'ERROR' && finding.severity !== 'WARNING') return false
-    const key = [finding.category, finding.severity, finding.ruleCode ?? '', finding.title.trim().toLowerCase()].join('|')
-    return all.findIndex((candidate) =>
-      candidate.severity === 'ERROR' || candidate.severity === 'WARNING'
-        ? [candidate.category, candidate.severity, candidate.ruleCode ?? '', candidate.title.trim().toLowerCase()].join('|') === key
-        : false,
-    ) === index
+    if (!finding || (finding.severity !== 'ERROR' && finding.severity !== 'WARNING')) return false
+    const findingTitle = typeof finding.title === 'string' ? finding.title.trim().toLowerCase() : ''
+    const key = [finding.category ?? '', finding.severity ?? '', finding.ruleCode ?? '', findingTitle].join('|')
+    return all.findIndex((candidate) => {
+      if (!candidate || (candidate.severity !== 'ERROR' && candidate.severity !== 'WARNING')) return false
+      const candidateTitle = typeof candidate.title === 'string' ? candidate.title.trim().toLowerCase() : ''
+      return [candidate.category ?? '', candidate.severity ?? '', candidate.ruleCode ?? '', candidateTitle].join('|') === key
+    }) === index
   })
-  const isMissingAltTextHardStop = (finding: { severity: string; category: string; title: string }) =>
+  const isMissingAltTextHardStop = (finding: { severity: string; category: string; title?: string | null }) =>
     finding.severity === 'ERROR' &&
     finding.category === 'ACCESSIBILITY' &&
+    typeof finding.title === 'string' &&
     finding.title.trim().toLowerCase() === 'image alt text is missing'
   const hardStopFindings = releaseGateFindings.filter(isMissingAltTextHardStop)
   const highRiskFindings = releaseGateFindings.filter(
@@ -728,12 +732,12 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
                           {selected.imageAuditData.logoVerification.suggestions.length > 0 && <ul className="bf-logo-verification-list suggestions">{selected.imageAuditData.logoVerification.suggestions.map((item, index) => <li key={`review-logo-suggestion-${index}`}>{item}</li>)}</ul>}
                         </section>
                       )}
-                      <ImageTextContrastReport analysis={selected.imageAuditData?.image.textContrastAnalysis} />
+                      <ImageTextContrastReport analysis={selected.imageAuditData?.image?.textContrastAnalysis} />
                       <p>
                         <b>Image audit findings:</b>{' '}
-                        {selected.imageAuditData.totalFindings}
-                        {selected.imageAuditData.image.colorAnalysis
-                          ? selected.imageAuditData.totalFindings === 0
+                        {selected.imageAuditData.totalFindings ?? 0}
+                        {selected.imageAuditData.image?.colorAnalysis
+                          ? (selected.imageAuditData.totalFindings ?? 0) === 0
                             ? ' — no configured image rules were triggered; this is not a full accessibility certification.'
                             : ' — review the configured findings below.'
                           : ' — saved result predates per-color checks; re-run Image Audit for a current comparison.'}
@@ -741,13 +745,13 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
 
                       <div className="bf-image-audit-review-summary">
                         <strong>
-                          {selected.imageAuditData.image.colorAnalysis
+                          {selected.imageAuditData.image?.colorAnalysis
                             ? `${selected.imageAuditData.image.colorAnalysis.filter((item) => item.matchesPalette).length} of ${selected.imageAuditData.image.colorAnalysis.length} dominant colors within palette tolerance`
                             : 'This saved audit predates per-color palette comparison; re-run Image Audit for detailed matching.'}
                         </strong>
                         <span>Palette comparison is a simple RGB similarity check, not a full visual or WCAG assessment.</span>
                       </div>
-                      {selected.imageAuditData.image.colorAnalysis ? (
+                      {selected.imageAuditData.image?.colorAnalysis ? (
                         <div className="bf-color-audit-list bf-color-audit-list-review">
                           {selected.imageAuditData.image.colorAnalysis.map((item) => (
                             <div className={`bf-color-audit-item ${!item.nearestApprovedColor ? 'is-no-palette' : item.matchesPalette ? 'is-match' : 'is-off-palette'}`} key={`review-color-${item.color}`}>
@@ -766,7 +770,7 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
                         </div>
                       ) : (
                         <div className="bf-swatch-list">
-                          {selected.imageAuditData.image.dominantColors.map((color) => (
+                          {(selected.imageAuditData.image?.dominantColors ?? []).map((color) => (
                             <div className="bf-swatch-item" key={`dominant-${color}`}>
                               <span className="bf-swatch-color" style={{ backgroundColor: color }} />
                               <code>{color}</code>
@@ -776,7 +780,7 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
                         </div>
                       )}
                       <div className="bf-swatch-list">
-                        {selected.imageAuditData.image.approvedColors.map((color) => (
+                        {(selected.imageAuditData.image?.approvedColors ?? []).map((color) => (
                           <div className="bf-swatch-item" key={`approved-${color}`}>
                             <span className="bf-swatch-color" style={{ backgroundColor: color }} />
                             <code>{color}</code>
@@ -785,26 +789,26 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
                         ))}
                       </div>
 
-                      {selected.imageAuditData.findings.map((finding, index) => (
+                      {(selected.imageAuditData.findings ?? []).map((finding, index) => (
                         <article
                           className="bf-review-finding"
                           key={`image-${finding.ruleCode}-${finding.title}-${index}`}
                         >
                           <div className="bf-review-finding-top">
                             <span>{finding.category}</span>
-                            <strong className={`bf-review-severity ${finding.severity.toLowerCase()}`}>
+                            <strong className={`bf-review-severity ${(finding.severity ?? 'INFO').toLowerCase()}`}>
                               {finding.severity}
                             </strong>
                             <code>{finding.ruleCode}</code>
                           </div>
                           <h4>{finding.title}</h4>
                           <p>{finding.ruleCode === 'ACCESSIBILITY-02'
-                            ? getReadableImageFindingCopy(finding, selected.imageAuditData?.image.textContrastAnalysis).summary
+                            ? getReadableImageFindingCopy(finding, selected.imageAuditData?.image?.textContrastAnalysis).summary
                             : finding.message}</p>
                           {finding.ruleCode === 'ACCESSIBILITY-02' ? (
                             <>
-                              <p><b>What we found:</b> {getReadableImageFindingCopy(finding, selected.imageAuditData?.image.textContrastAnalysis).whatFound}</p>
-                              <p><b>What to do:</b> {getReadableImageFindingCopy(finding, selected.imageAuditData?.image.textContrastAnalysis).whatToDo}</p>
+                              <p><b>What we found:</b> {getReadableImageFindingCopy(finding, selected.imageAuditData?.image?.textContrastAnalysis).whatFound}</p>
+                              <p><b>What to do:</b> {getReadableImageFindingCopy(finding, selected.imageAuditData?.image?.textContrastAnalysis).whatToDo}</p>
                             </>
                           ) : (
                             <>
@@ -872,108 +876,111 @@ export default function ReviewQueuePanel({ apiBaseUrl, token, initialSubmissionI
                 <h3>Comments &amp; activity ({(selected.comments ?? []).length})</h3>
                 {(selected.comments ?? []).length === 0 ? (
                   <p className="bf-review-small">No comments yet. Comments and decision notes will be kept together here.</p>
-                ) : (selected.comments ?? []).map((comment) => (
-                  <article className={`bf-review-comment${comment.body.startsWith('OVERRIDE REQUEST') ? ' bf-review-comment-override' : ''}${comment.body.startsWith('CHANGE REQUEST') ? ' bf-review-comment-request' : ''}${comment.body.startsWith('REJECTION') ? ' bf-review-comment-reject' : ''}${comment.body.startsWith('CREATOR UPDATE') ? ' bf-review-comment-update' : ''}`} key={comment.id}>
-                    <div className="bf-review-comment-meta">
-                      <strong>{comment.author?.name ?? 'User'}</strong>
-                      <span>{comment.author?.role ?? ''}</span>
-                      <time>{new Date(comment.createdAt).toLocaleString()}</time>
-                    </div>
-                    {comment.body.startsWith('REJECTION') ? (
-                      <>
-                        <span className="bf-rejection-badge">Campaign Rejected · Action Required</span>
-                        <div className="bf-rejection-content">
-                          <p>{comment.body.split('\n').slice(1).join('\n').trim()}</p>
-                        </div>
-                      </>
-                    ) : comment.body.startsWith('CREATOR UPDATE') ? (
-                      <>
-                        <span className="bf-creator-update-badge">Creator submission note</span>
-                        <div className="bf-creator-update-content">
-                          <p>{comment.body.split('\n').slice(1).join('\n').trim()}</p>
-                        </div>
-                      </>
-                    ) : comment.body.startsWith('CHANGE REQUEST') ? (
-                      <>
-                        <span className="bf-change-request-badge">Changes requested · creator action required</span>
-                        <div className="bf-change-request-content">
-                          <p>{comment.body.split('\n').slice(1).join('\n').trim()}</p>
-                        </div>
-                      </>
-                    ) : comment.body.startsWith('OVERRIDE REQUEST') ? (
-                      <>
-                        <span className="bf-override-message-badge">Creator override request</span>
-                        {comment.overrideReasonCategory && (
-                          <div className="bf-override-category-summary">
-                            <span>Reason category</span>
-                            <strong>
-                              {comment.overrideReasonCategory === 'RULE_UNCLEAR'
-                                ? 'Rule Unclear'
-                                : comment.overrideReasonCategory === 'CHANNEL_EXCEPTION'
-                                  ? 'Channel Exception'
-                                  : 'False Positive'}
-                            </strong>
+                ) : (selected.comments ?? []).map((comment) => {
+                  const body = typeof comment?.body === 'string' ? comment.body : ''
+                  return (
+                    <article className={`bf-review-comment${body.startsWith('OVERRIDE REQUEST') ? ' bf-review-comment-override' : ''}${body.startsWith('CHANGE REQUEST') ? ' bf-review-comment-request' : ''}${body.startsWith('REJECTION') ? ' bf-review-comment-reject' : ''}${body.startsWith('CREATOR UPDATE') ? ' bf-review-comment-update' : ''}`} key={comment.id}>
+                      <div className="bf-review-comment-meta">
+                        <strong>{comment.author?.name ?? 'User'}</strong>
+                        <span>{comment.author?.role ?? ''}</span>
+                        <time>{new Date(comment.createdAt || Date.now()).toLocaleString()}</time>
+                      </div>
+                      {body.startsWith('REJECTION') ? (
+                        <>
+                          <span className="bf-rejection-badge">Campaign Rejected · Action Required</span>
+                          <div className="bf-rejection-content">
+                            <p>{body.split('\n').slice(1).join('\n').trim()}</p>
                           </div>
-                        )}
-                        <div className="bf-override-message-content">
-                          {comment.body.split('\n').slice(1).filter(Boolean).map((line, index) => {
-                            const separator = line.indexOf(':')
-                            return <p key={`${comment.id}-detail-${index}`}>{separator > 0 ? <><strong>{line.slice(0, separator + 1)}</strong> {line.slice(separator + 1).trim()}</> : line}</p>
-                          })}
-                        </div>
-                        {findOverrideDecisionRecord(selected.comments, comment.id) ? (
-                          <>
-                            <span className={`bf-override-decision-badge ${findOverrideDecisionRecord(selected.comments, comment.id)?.body.includes('\nDecision: ACCEPTED\n') ? 'accepted' : 'rejected'}`}>
-                              {findOverrideDecisionRecord(selected.comments, comment.id)?.body.includes('\nDecision: ACCEPTED\n') ? 'Request accepted' : 'Request rejected'}
-                            </span>
-                            <p>{findOverrideDecisionRecord(selected.comments, comment.id)?.body.split('\n').find((line) => line.startsWith('Decision note: '))?.slice('Decision note: '.length)}</p>
-                          </>
-                        ) : selected.status === 'IN_REVIEW' && (
-                          pendingOverrideDecision?.requestId === comment.id ? (
-                            <form className="bf-override-decision-form" onSubmit={(event) => void submitOverrideRequestDecision(event)}>
-                              <label htmlFor={`bf-override-decision-note-${comment.id}`}>Decision rationale</label>
-                              <textarea
-                                id={`bf-override-decision-note-${comment.id}`}
-                                rows={3}
-                                minLength={10}
-                                maxLength={1000}
-                                required
-                                value={overrideDecisionNote}
-                                onChange={(event) => setOverrideDecisionNote(event.target.value)}
-                                placeholder="Explain why the request is accepted or rejected…"
-                                disabled={overrideDecisionBusy}
-                              />
-                              <small>A decision records reviewer acknowledgement only. Active findings remain subject to the normal approval gate.</small>
-                              <div className="bf-override-decision-actions">
-                                <button type="button" className="bf-btn-secondary" disabled={overrideDecisionBusy} onClick={() => { setPendingOverrideDecision(null); setOverrideDecisionNote('') }}>Cancel</button>
-                                <button type="submit" className="bf-btn-primary" disabled={overrideDecisionBusy || overrideDecisionNote.trim().length < 10}>
-                                  {overrideDecisionBusy ? 'Saving…' : `Confirm ${pendingOverrideDecision.decision === 'ACCEPTED' ? 'acceptance' : 'rejection'}`}
-                                </button>
-                              </div>
-                            </form>
-                          ) : (
-                            <div className="bf-override-decision-actions">
-                              <button type="button" className="bf-btn-secondary" disabled={overrideDecisionBusy} onClick={() => { setPendingOverrideDecision({ requestId: comment.id, decision: 'ACCEPTED' }); setOverrideDecisionNote(''); setError(null) }}>Accept request</button>
-                              <button type="button" className="bf-btn-secondary" disabled={overrideDecisionBusy} onClick={() => { setPendingOverrideDecision({ requestId: comment.id, decision: 'REJECTED' }); setOverrideDecisionNote(''); setError(null) }}>Reject request</button>
+                        </>
+                      ) : body.startsWith('CREATOR UPDATE') ? (
+                        <>
+                          <span className="bf-creator-update-badge">Creator submission note</span>
+                          <div className="bf-creator-update-content">
+                            <p>{body.split('\n').slice(1).join('\n').trim()}</p>
+                          </div>
+                        </>
+                      ) : body.startsWith('CHANGE REQUEST') ? (
+                        <>
+                          <span className="bf-change-request-badge">Changes requested · creator action required</span>
+                          <div className="bf-change-request-content">
+                            <p>{body.split('\n').slice(1).join('\n').trim()}</p>
+                          </div>
+                        </>
+                      ) : body.startsWith('OVERRIDE REQUEST') ? (
+                        <>
+                          <span className="bf-override-message-badge">Creator override request</span>
+                          {comment.overrideReasonCategory && (
+                            <div className="bf-override-category-summary">
+                              <span>Reason category</span>
+                              <strong>
+                                {comment.overrideReasonCategory === 'RULE_UNCLEAR'
+                                  ? 'Rule Unclear'
+                                  : comment.overrideReasonCategory === 'CHANNEL_EXCEPTION'
+                                    ? 'Channel Exception'
+                                    : 'False Positive'}
+                              </strong>
                             </div>
-                          )
-                        )}
-                      </>
-                    ) : comment.body.startsWith('OVERRIDE DECISION') ? (
-                      <>
-                        <span className={`bf-override-decision-badge ${comment.body.includes('\nDecision: ACCEPTED\n') ? 'accepted' : 'rejected'}`}>
-                          {comment.body.includes('\nDecision: ACCEPTED\n') ? 'Override request accepted' : 'Override request rejected'}
-                        </span>
-                        <p>{comment.body.split('\n').find((line) => line.startsWith('Decision note: '))?.slice('Decision note: '.length)}</p>
-                      </>
-                    ) : comment.body.startsWith('REVIEWER OVERRIDE') ? (
-                      <>
-                        <span className="bf-override-message-badge">Reviewer override · signed into Release Passport</span>
-                        <p className="bf-review-override-text">{comment.body.replace(/^REVIEWER OVERRIDE:?\s*/, '')}</p>
-                      </>
-                    ) : <p>{comment.body}</p>}
-                  </article>
-                ))}
+                          )}
+                          <div className="bf-override-message-content">
+                            {body.split('\n').slice(1).filter(Boolean).map((line, index) => {
+                              const separator = line.indexOf(':')
+                              return <p key={`${comment.id}-detail-${index}`}>{separator > 0 ? <><strong>{line.slice(0, separator + 1)}</strong> {line.slice(separator + 1).trim()}</> : line}</p>
+                            })}
+                          </div>
+                          {findOverrideDecisionRecord(selected.comments, comment.id) ? (
+                            <>
+                              <span className={`bf-override-decision-badge ${findOverrideDecisionRecord(selected.comments, comment.id)?.body.includes('\nDecision: ACCEPTED\n') ? 'accepted' : 'rejected'}`}>
+                                {findOverrideDecisionRecord(selected.comments, comment.id)?.body.includes('\nDecision: ACCEPTED\n') ? 'Request accepted' : 'Request rejected'}
+                              </span>
+                              <p>{findOverrideDecisionRecord(selected.comments, comment.id)?.body.split('\n').find((line) => line.startsWith('Decision note: '))?.slice('Decision note: '.length)}</p>
+                            </>
+                          ) : selected.status === 'IN_REVIEW' && (
+                            pendingOverrideDecision?.requestId === comment.id ? (
+                              <form className="bf-override-decision-form" onSubmit={(event) => void submitOverrideRequestDecision(event)}>
+                                <label htmlFor={`bf-override-decision-note-${comment.id}`}>Decision rationale</label>
+                                <textarea
+                                  id={`bf-override-decision-note-${comment.id}`}
+                                  rows={3}
+                                  minLength={10}
+                                  maxLength={1000}
+                                  required
+                                  value={overrideDecisionNote}
+                                  onChange={(event) => setOverrideDecisionNote(event.target.value)}
+                                  placeholder="Explain why the request is accepted or rejected…"
+                                  disabled={overrideDecisionBusy}
+                                />
+                                <small>A decision records reviewer acknowledgement only. Active findings remain subject to the normal approval gate.</small>
+                                <div className="bf-override-decision-actions">
+                                  <button type="button" className="bf-btn-secondary" disabled={overrideDecisionBusy} onClick={() => { setPendingOverrideDecision(null); setOverrideDecisionNote('') }}>Cancel</button>
+                                  <button type="submit" className="bf-btn-primary" disabled={overrideDecisionBusy || overrideDecisionNote.trim().length < 10}>
+                                    {overrideDecisionBusy ? 'Saving…' : `Confirm ${pendingOverrideDecision.decision === 'ACCEPTED' ? 'acceptance' : 'rejection'}`}
+                                  </button>
+                                </div>
+                              </form>
+                            ) : (
+                              <div className="bf-override-decision-actions">
+                                <button type="button" className="bf-btn-secondary" disabled={overrideDecisionBusy} onClick={() => { setPendingOverrideDecision({ requestId: comment.id, decision: 'ACCEPTED' }); setOverrideDecisionNote(''); setError(null) }}>Accept request</button>
+                                <button type="button" className="bf-btn-secondary" disabled={overrideDecisionBusy} onClick={() => { setPendingOverrideDecision({ requestId: comment.id, decision: 'REJECTED' }); setOverrideDecisionNote(''); setError(null) }}>Reject request</button>
+                              </div>
+                            )
+                          )}
+                        </>
+                      ) : body.startsWith('OVERRIDE DECISION') ? (
+                        <>
+                          <span className={`bf-override-decision-badge ${body.includes('\nDecision: ACCEPTED\n') ? 'accepted' : 'rejected'}`}>
+                            {body.includes('\nDecision: ACCEPTED\n') ? 'Override request accepted' : 'Override request rejected'}
+                          </span>
+                          <p>{body.split('\n').find((line) => line.startsWith('Decision note: '))?.slice('Decision note: '.length)}</p>
+                        </>
+                      ) : body.startsWith('REVIEWER OVERRIDE') ? (
+                        <>
+                          <span className="bf-override-message-badge">Reviewer override · signed into Release Passport</span>
+                          <p className="bf-review-override-text">{body.replace(/^REVIEWER OVERRIDE:?\s*/, '')}</p>
+                        </>
+                      ) : <p>{body}</p>}
+                    </article>
+                  )
+                })}
 
                 {selected.status === 'IN_REVIEW' ? (
                   <form className="bf-review-comment-form" onSubmit={(event) => {
