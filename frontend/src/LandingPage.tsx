@@ -323,10 +323,10 @@ export default function LandingPage({
                     <span className="bs-rule-code">RULE: TERM_04</span>
                   </div>
                   <strong>&quot;cheapest ever&quot;</strong>
-                  <p>Brand positioning prohibits discount-oriented language. PahariKnits represents ethical heritage craft.</p>
+                  <p>Brand positioning prohibits discount-oriented language. Campa Cola represents premium Indian heritage refreshment.</p>
                   <div className="bs-suggested-fix">
                     <span>Suggested replacement:</span>
-                    <code>&quot;exceptionally accessible&quot;</code>
+                    <code>&quot;celebratory value at MRP ₹20&quot;</code>
                   </div>
                 </div>
 
@@ -334,10 +334,10 @@ export default function LandingPage({
                   <div className="bs-finding-meta">
                     <AlertTriangle size={16} className="text-amber" />
                     <span className="bs-finding-badge warning">UNVERIFIED CLAIM</span>
-                    <span className="bs-rule-code">CLAIM: FACT_09</span>
+                    <span className="bs-rule-code">CLAIM: FACT_02</span>
                   </div>
-                  <strong>&quot;100% pure Himalayan yak wool&quot;</strong>
-                  <p>Numerical blend claims must match approved truth (PahariKnits blend is 85% Merino, 15% Cashmere).</p>
+                  <strong>&quot;100% natural fruit juice zero sugar&quot;</strong>
+                  <p>Nutritional claims must match approved truth (Campa Cola 500ml contains 21g carbohydrates per serving).</p>
                 </div>
               </div>
             </div>
@@ -354,7 +354,7 @@ export default function LandingPage({
                   <div className="bs-visual-preview-frame">
                     <div className="bs-contrast-demo-box">
                       <span className="bs-contrast-ratio">Contrast Ratio: <strong>7.42 : 1</strong></span>
-                      <p className="bs-contrast-sample-text">High-Elevation Warmth</p>
+                      <p className="bs-contrast-sample-text">The Great Indian Taste</p>
                       <span className="bs-contrast-subtext">Level AAA Compliant</span>
                     </div>
                   </div>
@@ -367,7 +367,7 @@ export default function LandingPage({
                     <span className="bs-status-pill cyan">LOGO CONFIRMED</span>
                   </div>
                   <div className="bs-visual-preview-frame logo-frame">
-                    <img src="/pahariknits-logo.png" alt="PahariKnits Mark" className="bs-sample-logo" />
+                    <img src="/campacola-logo.png" alt="Campa Cola Mark" className="bs-sample-logo" />
                     <div className="bs-logo-match-meter">
                       <span>Wordmark Match: <strong>100%</strong></span>
                       <div className="bs-meter-bar"><div className="bs-meter-fill" style={{ width: '100%' }} /></div>

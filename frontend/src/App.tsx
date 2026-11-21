@@ -189,47 +189,53 @@ export const clearStoredSaveToast = (): void => {
 
 const SEEDED_BRAND_PROFILE = {
   id: 'brandflight-demo',
-  name: 'PahariKnits',
-  description: 'Direct-to-consumer Himalayan apparel brand with a product catalogue covering regional textiles, materials, dimensions, care guidance, and return terms.',
-  brandColors: ['#1D3461', '#152648', '#A86D2B', '#F7F5F1', '#2A7A8A', '#1A2438'],
+  name: 'Campa Cola',
+  description:
+    'Iconic Indian carbonated beverage brand by Reliance Consumer Products Ltd, offering classic cola, lemon, and orange refreshments celebrated across India as The Great Indian Taste.',
+  brandColors: ['#C41230', '#0B1E3D', '#FFFFFF', '#00A3E0', '#F59E0B', '#1E293B'],
   accessibilityPairs: [
-    { role: 'BODY_TEXT', foreground: '#1A2438', background: '#F7F5F1' },
-    { role: 'HEADING', foreground: '#152648', background: '#F7F5F1' },
-    { role: 'CTA_TEXT', foreground: '#000000', background: '#A86D2B' },
-    { role: 'CAPTION', foreground: '#4A5A72', background: '#F7F5F1' },
-    { role: 'UI_ELEMENT', foreground: '#1D3461', background: '#F7F5F1' },
+    { role: 'BODY_TEXT', foreground: '#0B1E3D', background: '#FFFFFF' },
+    { role: 'HEADING', foreground: '#C41230', background: '#FFFFFF' },
+    { role: 'CTA_TEXT', foreground: '#FFFFFF', background: '#C41230' },
+    { role: 'CAPTION', foreground: '#475569', background: '#FFFFFF' },
+    { role: 'UI_ELEMENT', foreground: '#0B1E3D', background: '#F8FAFC' },
   ],
   rules: [
     {
       ruleCode: 'TONE-01',
       category: 'TONE' as const,
       engine: 'Gemini Semantic Evaluation',
-      title: 'Use warm, craft-led product storytelling',
-      description: 'Write in a warm, respectful, informative voice. Keep product copy specific and grounded in the approved catalogue.',
+      title: 'Use celebratory, energetic Indian refreshment voice',
+      description:
+        'Write in an energetic, festive, and welcoming tone celebrating togetherness, authentic Indian refreshment, and heritage. Keep product claims grounded in the approved catalogue.',
       pattern: null,
     },
     {
       ruleCode: 'TERM-01',
       category: 'TERMINOLOGY' as const,
       engine: 'Deterministic Regex Match',
-      title: 'Avoid unsupported superlatives and guarantees',
-      description: 'Flag exaggerated superlatives and guarantees such as best, finest, perfect, unmatched, and guaranteed.',
-      pattern: '\\b(best|finest|perfect|guarantee(?:s|d|ing)?|unmatched|number one|no\\.?\\s*1)\\b',
+      title: 'Prohibit unsupported superlatives and unverified health claims',
+      description:
+        'Flag exaggerated superlatives and unverified health claims such as best, finest, perfect, unmatched, zero calories, sugar-free, 100% natural, or cures fatigue.',
+      pattern:
+        '\\b(best|finest|perfect|guarantee(?:s|d|ing)?|unmatched|number one|no\\.?\\s*1|zero calories|sugar-free|100% natural|cure(?:s|d)?)\\b',
     },
     {
       ruleCode: 'CLAIM-01',
       category: 'CLAIM' as const,
       engine: 'Deterministic Fact Comparison + Gemini Semantic Evaluation',
-      title: 'Match product claims to the approved catalogue',
-      description: 'Product names, prices, regional origins, fibre compositions, dimensions, weights, craft techniques, and care instructions must match approved product facts.',
+      title: 'Match bottle sizes, MRPs, and nutrition to approved catalogue',
+      description:
+        'Product names, packaging volumes (200ml, 500ml, 2L), MRPs (₹10, ₹20, ₹70), serving temperatures (4°C to 8°C), and return policies must strictly match approved Campa Cola facts. Do not invent discounts or unapproved pricing.',
       pattern: null,
     },
     {
       ruleCode: 'VISUAL-01',
       category: 'VISUAL' as const,
       engine: 'Deterministic Palette + Gemini Visual Review',
-      title: 'Preserve the PahariKnits visual identity',
-      description: 'Use approved navy, cream, logo-copper (#A86D2B), and teal colours. Use black text on logo-copper CTAs. Campaign visuals must represent the promoted product accurately.',
+      title: 'Preserve the Campa Cola visual identity',
+      description:
+        'Use the approved Campa Red (#C41230), Navy (#0B1E3D), and white palette. Use white text on Campa Red CTAs; do not place small red text on dark backgrounds.',
       pattern: null,
     },
     {
@@ -237,7 +243,8 @@ const SEEDED_BRAND_PROFILE = {
       category: 'ACCESSIBILITY' as const,
       engine: 'Deterministic Alt-Text Validation',
       title: 'Provide accurate product-image alt text',
-      description: 'Provide meaningful alt text between 10 and 150 characters. Do not infer material, origin, or production method from the image alone.',
+      description:
+        'Provide meaningful alt text between 10 and 150 characters describing packaging, bottle silhouettes, and beverage variants without guessing unverified claims.',
       pattern: null,
     },
     {
@@ -245,47 +252,80 @@ const SEEDED_BRAND_PROFILE = {
       category: 'ACCESSIBILITY' as const,
       engine: 'Deterministic WCAG Contrast + Gemini Visual Review',
       title: 'Maintain readable text contrast in campaign artwork',
-      description: 'Use configured WCAG 2.1 role pairs: 4.5:1 for regular text and 3:1 for large text or non-text UI elements. Avoid small copper text on cream and white text on copper.',
+      description:
+        'Use configured WCAG 2.1 contrast role pairs: at least 4.5:1 for regular text and 3:1 for large headings or non-text UI elements.',
       pattern: null,
     },
   ],
   facts: [
-    { factCode: 'FACT-01', claim: 'The Kullu Valley Shawl is listed at ₹2,499 and is described as pure Himalayan wool, hand-spun and naturally dyed, with Kullu, Himachal Pradesh as its origin.', sourceLabel: 'PahariKnits product catalogue' },
-    { factCode: 'FACT-02', claim: 'The Kullu Valley Shawl is hand-woven on traditional pit looms and features Kullu buti geometric patterns.', sourceLabel: 'PahariKnits product catalogue' },
-    { factCode: 'FACT-03', claim: 'The Kinnauri Striped Muffler is listed at ₹899 and uses an Angora blend of 70% wool and 30% Angora; its listed origin is Kinnaur, Himachal Pradesh.', sourceLabel: 'PahariKnits product catalogue' },
-    { factCode: 'FACT-04', claim: 'Spiti Hand-Knit Woolen Socks are listed at ₹349 and are made from unbleached Himalayan sheep wool; the listed origin is Spiti Valley, Himachal Pradesh.', sourceLabel: 'PahariKnits product catalogue' },
-    { factCode: 'FACT-05', claim: 'The Chamba Embroidered Stole is listed at ₹1,799 and has a 60% pashmina, 40% silk base with silk embroidery thread; its listed origin is Chamba, Himachal Pradesh.', sourceLabel: 'PahariKnits product catalogue' },
-    { factCode: 'FACT-06', claim: 'The Manali Shepherd\'s Cap is listed at ₹599 and is made from dense felted wool, hand-blocked and hand-finished; its listed origin is Manali, Himachal Pradesh.', sourceLabel: 'PahariKnits product catalogue' },
-    { factCode: 'FACT-07', claim: 'The Rampur Double-Weave Shawl is listed at ₹3,299 and uses fine merino wool in a double-weave, hand-woven construction; its listed origin is Rampur Bushahr, Himachal Pradesh.', sourceLabel: 'PahariKnits product catalogue' },
-    { factCode: 'FACT-08', claim: 'PahariKnits accepts return requests within 3 days of delivery.', sourceLabel: 'PahariKnits published return policy' },
-    { factCode: 'FACT-09', claim: 'Returned items must be unused, have their original tags attached, and be in their original packaging.', sourceLabel: 'PahariKnits published return policy' },
+    {
+      factCode: 'FACT-01',
+      claim:
+        'Campa Cola 500ml PET bottle is priced at MRP ₹20, bottled by Reliance Consumer Products Ltd.',
+      sourceLabel: 'Campa Cola official product catalogue and retail policies',
+    },
+    {
+      factCode: 'FACT-02',
+      claim:
+        'Campa Cola 200ml returnable glass bottle is priced at MRP ₹10 with 21g carbohydrate content per serving.',
+      sourceLabel: 'Campa Cola official product catalogue and retail policies',
+    },
+    {
+      factCode: 'FACT-03',
+      claim: 'Campa Cola 2-Litre family celebration pack is priced at MRP ₹70.',
+      sourceLabel: 'Campa Cola official product catalogue and retail policies',
+    },
+    {
+      factCode: 'FACT-04',
+      claim:
+        'Campa Orange is a sparkling citrus flavored beverage formulated with permitted natural color (110) and added orange fruit flavor.',
+      sourceLabel: 'Campa Cola official product catalogue and retail policies',
+    },
+    {
+      factCode: 'FACT-05',
+      claim:
+        'Campa Lemon is a crisp carbonated lemon-lime soft drink with sparkling carbonation.',
+      sourceLabel: 'Campa Cola official product catalogue and retail policies',
+    },
+    {
+      factCode: 'FACT-06',
+      claim:
+        'Campa Cola products should be stored in a cool, dry place and are best served chilled between 4°C and 8°C.',
+      sourceLabel: 'Campa Cola official product catalogue and retail policies',
+    },
+    {
+      factCode: 'FACT-07',
+      claim:
+        'Damaged, leaked, or unsealed bottles can be replaced at the retail point of purchase within 24 hours with valid invoice and batch code.',
+      sourceLabel: 'Campa Cola official product catalogue and retail policies',
+    },
   ],
 }
 
 const SAMPLE_DRAFTS: SampleDraft[] = [
   {
     id: 'sample-1',
-    label: 'Product launch (has violations)',
-    title: 'Kullu Valley Shawl — Winter Collection Launch',
+    label: 'Summer blast (has violations)',
+    title: 'Campa Cola — Summer Refreshment Blast',
     channel: 'Instagram / Paid social',
     content:
-      'The BEST shawl in the Himalayas. Our Kullu Valley Shawl is 100% cashmere and guarantees warmth for a lifetime. Now only ₹999.',
+      'The BEST cola in India! Our Campa Cola 500ml bottle has ZERO calories and guarantees maximum energy for every celebration. Now only ₹5 at your nearest store.',
   },
   {
     id: 'sample-2',
-    label: 'Sponsored social ad (partial drift)',
-    title: 'Kinnauri Striped Muffler — Sponsored Post',
+    label: 'Orange post (partial drift)',
+    title: 'Campa Orange — Desi Tang Celebration',
     channel: 'Sponsored social post',
     content:
-      'The Kinnauri Striped Muffler is made from 100% Angora and now available for ₹699. Get guaranteed all-day warmth with the softest finish in the valley.',
+      'Experience 100% natural fruit juice in every chilled bottle of Campa Orange for just ₹15. Refreshing citrus burst in every sip.',
   },
   {
     id: 'sample-3',
-    label: 'Compliant product overview',
-    title: 'Kullu Valley Shawl — Product Overview',
-    channel: 'Product page',
+    label: 'Compliant campaign launch',
+    title: 'Campa Cola — The Great Indian Taste',
+    channel: 'National launch campaign',
     content:
-      'Meet the Kullu Valley Shawl, hand-woven on traditional pit looms in Kullu, Himachal Pradesh. Made from pure Himalayan wool that is hand-spun and naturally dyed, it features Kullu buti geometric patterns. Price: ₹2,499. Hand wash in cold water with mild soap; dry flat in shade and do not wring.',
+      'Refresh your celebrations with the classic taste of Campa Cola, bottled by Reliance Consumer Products Ltd. Best served chilled between 4°C and 8°C. 500ml PET bottle at MRP ₹20.',
   },
 ]
 
@@ -871,6 +911,35 @@ export function App() {
       setIsImageAuditing(false)
     }
   }
+
+  const handleUseSampleImage = useCallback(async () => {
+    try {
+      const response = await fetch('/campacola-campaign.png')
+      if (!response.ok) throw new Error('Failed to load sample image asset')
+      const blob = await response.blob()
+      const file = new File([blob], 'campacola-campaign.png', { type: 'image/png' })
+
+      setImageFile(file)
+      setImagePrivacyAcknowledged(true)
+      setImageAuditResult(null)
+      setAuditedImageAltText(null)
+      setImageAuditError(null)
+
+      if (imageObjectUrlRef.current) {
+        URL.revokeObjectURL(imageObjectUrlRef.current)
+        imageObjectUrlRef.current = null
+      }
+
+      const url = URL.createObjectURL(file)
+      imageObjectUrlRef.current = url
+      setImagePreviewUrl(url)
+      setImageAltText(
+        'Chilled 500ml bottle of Campa Cola on ice with classic red wave branding and Great Indian Taste slogan',
+      )
+    } catch (err) {
+      setImageAuditError('Could not preload Campa Cola demo image.')
+    }
+  }, [])
 
   const consolidatedFindings = useMemo(
     () => consolidateFindings(auditResult?.findings ?? []),
@@ -2086,6 +2155,35 @@ export function App() {
                             <span>I confirm this image contains no unredacted personal or confidential information.</span>
                           </label>
                         </div>
+
+                        {/* Campa Cola Preloaded Demo Asset Card */}
+                        <div className="bf-sample-image-card">
+                          <div className="bf-sample-image-preview">
+                            <img src="/campacola-campaign.png" alt="Campa Cola Sample Asset" />
+                          </div>
+                          <div className="bf-sample-image-info">
+                            <div className="bf-sample-image-header">
+                              <span className="bf-sample-image-badge">Preloaded Demo Asset</span>
+                              <strong>Campa Cola Summer Campaign Artwork</strong>
+                            </div>
+                            <p className="bf-sample-image-desc">
+                              Preloaded 800×500px creative visual with verified Campa wave branding and "The Great Indian Taste" headline.
+                            </p>
+                            <div className="bf-sample-image-alt-hint">
+                              <strong>Suggested Alt Text:</strong>
+                              <span>Chilled 500ml bottle of Campa Cola on ice with classic red wave branding and Great Indian Taste slogan</span>
+                            </div>
+                            <button
+                              type="button"
+                              className="bf-btn-secondary bf-btn-use-image"
+                              disabled={isImageAuditing}
+                              onClick={handleUseSampleImage}
+                            >
+                              ⚡ Use This Image
+                            </button>
+                          </div>
+                        </div>
+
                         <div className="bf-field">
                           <label className="bf-label" htmlFor="bf-image-file">
                             Campaign image

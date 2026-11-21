@@ -59,74 +59,94 @@ async function seedDemoUsers() {
 
 async function main() {
   await seedDemoUsers();
+
+  const creator = await prisma.user.findUnique({ where: { email: "creator@brandflight.demo" } });
+  const reviewer = await prisma.user.findUnique({ where: { email: "reviewer@brandflight.demo" } });
+  const manager = await prisma.user.findUnique({ where: { email: "manager@brandflight.demo" } });
+
+  if (!creator || !reviewer || !manager) {
+    throw new Error("Demo users could not be located after seeding.");
+  }
+
+  // 1. Seed Campa Cola Brand Profile
   const brand = await prisma.brandProfile.upsert({
     where: { id: "brandflight-demo" },
     update: {
-      name: "PahariKnits",
-      description: "Direct-to-consumer Himalayan apparel brand with a product catalogue covering region-specific textiles, materials, dimensions, care guidance, and return terms.",
-      brandColors: ["#1D3461", "#152648", "#A86D2B", "#F7F5F1", "#2A7A8A", "#1A2438"],
+      name: "Campa Cola",
+      description:
+        "Iconic Indian carbonated beverage brand by Reliance Consumer Products Ltd, offering classic cola, lemon, and orange refreshments celebrated across India as The Great Indian Taste.",
+      brandColors: ["#C41230", "#0B1E3D", "#FFFFFF", "#00A3E0", "#F59E0B", "#1E293B"],
       accessibilityPairs: [
-        { role: "BODY_TEXT", foreground: "#1A2438", background: "#F7F5F1" },
-        { role: "HEADING", foreground: "#152648", background: "#F7F5F1" },
-        { role: "CTA_TEXT", foreground: "#000000", background: "#A86D2B" },
-        { role: "CAPTION", foreground: "#4A5A72", background: "#F7F5F1" },
-        { role: "UI_ELEMENT", foreground: "#1D3461", background: "#F7F5F1" },
+        { role: "BODY_TEXT", foreground: "#0B1E3D", background: "#FFFFFF" },
+        { role: "HEADING", foreground: "#C41230", background: "#FFFFFF" },
+        { role: "CTA_TEXT", foreground: "#FFFFFF", background: "#C41230" },
+        { role: "CAPTION", foreground: "#475569", background: "#FFFFFF" },
+        { role: "UI_ELEMENT", foreground: "#0B1E3D", background: "#F8FAFC" },
       ],
     },
     create: {
       id: "brandflight-demo",
-      name: "PahariKnits",
-      description: "Direct-to-consumer Himalayan apparel brand with a product catalogue covering region-specific textiles, materials, dimensions, care guidance, and return terms.",
-      brandColors: ["#1D3461", "#152648", "#A86D2B", "#F7F5F1", "#2A7A8A", "#1A2438"],
+      name: "Campa Cola",
+      description:
+        "Iconic Indian carbonated beverage brand by Reliance Consumer Products Ltd, offering classic cola, lemon, and orange refreshments celebrated across India as The Great Indian Taste.",
+      brandColors: ["#C41230", "#0B1E3D", "#FFFFFF", "#00A3E0", "#F59E0B", "#1E293B"],
       accessibilityPairs: [
-        { role: "BODY_TEXT", foreground: "#1A2438", background: "#F7F5F1" },
-        { role: "HEADING", foreground: "#152648", background: "#F7F5F1" },
-        { role: "CTA_TEXT", foreground: "#000000", background: "#A86D2B" },
-        { role: "CAPTION", foreground: "#4A5A72", background: "#F7F5F1" },
-        { role: "UI_ELEMENT", foreground: "#1D3461", background: "#F7F5F1" },
+        { role: "BODY_TEXT", foreground: "#0B1E3D", background: "#FFFFFF" },
+        { role: "HEADING", foreground: "#C41230", background: "#FFFFFF" },
+        { role: "CTA_TEXT", foreground: "#FFFFFF", background: "#C41230" },
+        { role: "CAPTION", foreground: "#475569", background: "#FFFFFF" },
+        { role: "UI_ELEMENT", foreground: "#0B1E3D", background: "#F8FAFC" },
       ],
     },
   });
 
+  // 2. Seed Campa Cola Governance Rules
   const rules = [
     {
       ruleCode: "TONE-01",
       category: "TONE" as const,
-      title: "Use warm, craft-led product storytelling",
-      description: "Write in a warm, respectful, informative voice. Keep product copy specific and grounded in the approved catalogue. Describe regional craft, materials, and techniques only when they are supported for the product being promoted.",
+      title: "Use celebratory, energetic Indian refreshment voice",
+      description:
+        "Write in an energetic, festive, and welcoming tone celebrating togetherness, authentic Indian refreshment, and heritage. Keep product claims grounded in the approved catalogue.",
     },
     {
       ruleCode: "TERM-01",
       category: "TERMINOLOGY" as const,
-      title: "Avoid unsupported superlatives and guarantees",
-      description: "Flag exaggerated superlatives and guarantees such as best, finest, perfect, unmatched, and guaranteed. Factual product labels such as Bestseller are allowed when used as catalogue metadata.",
-      pattern: "\\b(best|finest|perfect|guarantee(?:s|d|ing)?|unmatched|number one|no\\.?\\s*1)\\b",
+      title: "Prohibit unsupported superlatives and unverified health claims",
+      description:
+        "Flag exaggerated superlatives and unverified health claims such as best, finest, perfect, unmatched, zero calories, sugar-free, 100% natural, or cures fatigue.",
+      pattern: "\\b(best|finest|perfect|guarantee(?:s|d|ing)?|unmatched|number one|no\\.?\\s*1|zero calories|sugar-free|100% natural|cure(?:s|d)?)\\b",
     },
     {
       ruleCode: "CLAIM-01",
       category: "CLAIM" as const,
-      title: "Match product claims to the approved catalogue",
-      description: "Product names, prices, regional origins, fibre compositions, dimensions, weights, craft techniques, and care instructions must match the approved product facts. Do not transfer a material or technique from one product to another or invent percentages, discounts, performance promises, or delivery terms.",
+      title: "Match bottle sizes, MRPs, and nutrition to approved catalogue",
+      description:
+        "Product names, packaging volumes (200ml, 500ml, 2L), MRPs (₹10, ₹20, ₹70), serving temperatures (4°C to 8°C), and return policies must strictly match approved Campa Cola facts. Do not invent discounts or unapproved pricing.",
     },
     {
       ruleCode: "VISUAL-01",
       category: "VISUAL" as const,
-      title: "Preserve the PahariKnits visual identity",
-      description: "Use the approved navy, cream, logo-copper (#A86D2B), and teal palette. Use black text on logo-copper CTAs; do not use small copper text on cream or white text on copper. Campaign visuals must represent the promoted product accurately and must not imply an unapproved fibre, region, pattern, or craft technique.",
+      title: "Preserve the Campa Cola visual identity",
+      description:
+        "Use the approved Campa Red (#C41230), Navy (#0B1E3D), and white palette. Use white text on Campa Red CTAs; do not place small red text on dark backgrounds.",
     },
     {
       ruleCode: "ACCESSIBILITY-01",
       category: "ACCESSIBILITY" as const,
       title: "Provide accurate product-image alt text",
-      description: "Provide meaningful alt text between 10 and 150 characters. Describe the visible product, pattern, and colour where clear. Do not infer fibre composition, regional origin, artisan identity, or production method from the image alone.",
+      description:
+        "Provide meaningful alt text between 10 and 150 characters describing packaging, bottle silhouettes, and beverage variants without guessing unverified claims.",
     },
     {
       ruleCode: "ACCESSIBILITY-02",
       category: "ACCESSIBILITY" as const,
       title: "Maintain readable text contrast in campaign artwork",
-      description: "Use the configured role-based WCAG 2.1 contrast pairs. Regular text requires at least 4.5:1 and large text or non-text UI elements require at least 3:1. Avoid placing small copper text over cream backgrounds or text over busy textile details.",
+      description:
+        "Use configured WCAG 2.1 contrast role pairs: at least 4.5:1 for regular text and 3:1 for large headings or non-text UI elements.",
     },
   ];
+
   for (const rule of rules) {
     await prisma.brandRule.upsert({
       where: {
@@ -140,44 +160,38 @@ async function main() {
     });
   }
 
+  // 3. Seed Campa Cola Approved Factual Truth
   const facts = [
     {
       factCode: "FACT-01",
-      claim: "The Kullu Valley Shawl is listed at ₹2,499 and is described as pure Himalayan wool, hand-spun and naturally dyed, with Kullu, Himachal Pradesh as its origin.",
+      claim: "Campa Cola 500ml PET bottle is priced at MRP ₹20, bottled by Reliance Consumer Products Ltd.",
     },
     {
       factCode: "FACT-02",
-      claim: "The Kullu Valley Shawl is hand-woven on traditional pit looms and features Kullu buti geometric patterns.",
+      claim: "Campa Cola 200ml returnable glass bottle is priced at MRP ₹10 with 21g carbohydrate content per serving.",
     },
     {
       factCode: "FACT-03",
-      claim: "The Kinnauri Striped Muffler is listed at ₹899 and uses an Angora blend of 70% wool and 30% Angora; its listed origin is Kinnaur, Himachal Pradesh.",
+      claim: "Campa Cola 2-Litre family celebration pack is priced at MRP ₹70.",
     },
     {
       factCode: "FACT-04",
-      claim: "Spiti Hand-Knit Woolen Socks are listed at ₹349 and are made from unbleached Himalayan sheep wool; the listed origin is Spiti Valley, Himachal Pradesh.",
+      claim: "Campa Orange is a sparkling citrus flavored beverage formulated with permitted natural color (110) and added orange fruit flavor.",
     },
     {
       factCode: "FACT-05",
-      claim: "The Chamba Embroidered Stole is listed at ₹1,799 and has a 60% pashmina, 40% silk base with silk embroidery thread; its listed origin is Chamba, Himachal Pradesh.",
+      claim: "Campa Lemon is a crisp carbonated lemon-lime soft drink with sparkling carbonation.",
     },
     {
       factCode: "FACT-06",
-      claim: "The Manali Shepherd's Cap is listed at ₹599 and is made from dense felted wool, hand-blocked and hand-finished; its listed origin is Manali, Himachal Pradesh.",
+      claim: "Campa Cola products should be stored in a cool, dry place and are best served chilled between 4°C and 8°C.",
     },
     {
       factCode: "FACT-07",
-      claim: "The Rampur Double-Weave Shawl is listed at ₹3,299 and uses fine merino wool in a double-weave, hand-woven construction; its listed origin is Rampur Bushahr, Himachal Pradesh.",
-    },
-    {
-      factCode: "FACT-08",
-      claim: "PahariKnits accepts return requests within 3 days of delivery.",
-    },
-    {
-      factCode: "FACT-09",
-      claim: "Returned items must be unused, have their original tags attached, and be in their original packaging.",
+      claim: "Damaged, leaked, or unsealed bottles can be replaced at the retail point of purchase within 24 hours with valid invoice and batch code.",
     },
   ];
+
   for (const fact of facts) {
     await prisma.approvedFact.upsert({
       where: {
@@ -188,17 +202,187 @@ async function main() {
       },
       update: {
         ...fact,
-        sourceLabel: "PahariKnits product catalogue and published policies",
+        sourceLabel: "Campa Cola official product catalogue and retail policies",
       },
       create: {
         ...fact,
-        sourceLabel: "PahariKnits product catalogue and published policies",
+        sourceLabel: "Campa Cola official product catalogue and retail policies",
         brandProfileId: brand.id,
       },
     });
   }
 
-  console.log("PahariKnits demo brand, rules, accessibility standards, and approved facts seeded.");
+  // 4. Seed Preloaded Campa Cola Campaigns for Reviewer & Manager Dashboards
+  // Submission 1: IN_REVIEW (ready for Demo Reviewer to inspect and act upon)
+  const sub1 = await prisma.submission.upsert({
+    where: { id: "campa-sub-01" },
+    update: {
+      title: "Campa Cola — Summer Refreshment Blast",
+      contentText:
+        "The BEST cola in India! Our Campa Cola 500ml bottle has ZERO calories and guarantees maximum energy for every celebration. Now only ₹5 at your nearest store.",
+      tags: ["Summer2026", "SocialMedia", "Campaign"],
+      status: "IN_REVIEW",
+      brandProfileId: brand.id,
+      creatorId: creator.id,
+      imageName: "campacola-campaign.png",
+      imageUrl: "/campacola-campaign.png",
+      imageAltText: "Chilled 500ml bottle of Campa Cola on ice with classic red wave branding and Great Indian Taste tagline",
+    },
+    create: {
+      id: "campa-sub-01",
+      title: "Campa Cola — Summer Refreshment Blast",
+      contentText:
+        "The BEST cola in India! Our Campa Cola 500ml bottle has ZERO calories and guarantees maximum energy for every celebration. Now only ₹5 at your nearest store.",
+      tags: ["Summer2026", "SocialMedia", "Campaign"],
+      status: "IN_REVIEW",
+      brandProfileId: brand.id,
+      creatorId: creator.id,
+      imageName: "campacola-campaign.png",
+      imageUrl: "/campacola-campaign.png",
+      imageAltText: "Chilled 500ml bottle of Campa Cola on ice with classic red wave branding and Great Indian Taste tagline",
+    },
+  });
+
+  // Attach findings to Submission 1
+  await prisma.finding.deleteMany({ where: { submissionId: sub1.id } });
+  await prisma.finding.createMany({
+    data: [
+      {
+        submissionId: sub1.id,
+        category: "TERMINOLOGY",
+        severity: "WARNING",
+        title: "Avoid unsupported superlatives",
+        message: "Content matched rule TERM-01: Prohibit unsupported superlatives and unverified health claims",
+        evidence: "BEST",
+        originalSpan: "BEST",
+        suggestion: "Replace 'BEST' with 'authentic' or 'beloved'.",
+        ruleCode: "TERM-01",
+        confidence: "Deterministic Match",
+      },
+      {
+        submissionId: sub1.id,
+        category: "CLAIM",
+        severity: "ERROR",
+        title: "Price & nutritional claim mismatch",
+        message: "Campa Cola 500ml is approved at MRP ₹20 (not ₹5). Standard formula contains 21g carbohydrates (not zero calories).",
+        evidence: "ZERO calories ... ₹5",
+        originalSpan: "ZERO calories",
+        suggestion: "Use approved catalogue values: MRP ₹20, contains 21g carbohydrates.",
+        ruleCode: "CLAIM-01",
+        confidence: "Needs Human Review",
+      },
+    ],
+  });
+
+  // Submission 2: CHANGES_REQUESTED (demonstrates feedback loop)
+  const sub2 = await prisma.submission.upsert({
+    where: { id: "campa-sub-02" },
+    update: {
+      title: "Campa Orange — Desi Tang Celebration",
+      contentText:
+        "Experience 100% natural fruit juice in every chilled bottle of Campa Orange for just ₹15. Refreshing citrus burst in every sip.",
+      tags: ["Citrus", "Orange", "OutdoorPrint"],
+      status: "CHANGES_REQUESTED",
+      brandProfileId: brand.id,
+      creatorId: creator.id,
+      reviewerId: reviewer.id,
+      imageName: "campacola-campaign.png",
+      imageUrl: "/campacola-campaign.png",
+      imageAltText: "Campa Orange sparkling beverage bottle in sunlit summer background",
+    },
+    create: {
+      id: "campa-sub-02",
+      title: "Campa Orange — Desi Tang Celebration",
+      contentText:
+        "Experience 100% natural fruit juice in every chilled bottle of Campa Orange for just ₹15. Refreshing citrus burst in every sip.",
+      tags: ["Citrus", "Orange", "OutdoorPrint"],
+      status: "CHANGES_REQUESTED",
+      brandProfileId: brand.id,
+      creatorId: creator.id,
+      reviewerId: reviewer.id,
+      imageName: "campacola-campaign.png",
+      imageUrl: "/campacola-campaign.png",
+      imageAltText: "Campa Orange sparkling beverage bottle in sunlit summer background",
+    },
+  });
+
+  // Reviewer comment on Submission 2
+  await prisma.comment.deleteMany({ where: { submissionId: sub2.id } });
+  await prisma.comment.create({
+    data: {
+      submissionId: sub2.id,
+      authorId: reviewer.id,
+      body: "Please update the claim: Campa Orange is formulated with permitted natural color and added fruit flavor, not 100% natural fruit juice. Also update pricing to approved MRP ₹20 for 500ml.",
+    },
+  });
+
+  // Submission 3: APPROVED (demonstrates cryptographic Release Passport)
+  const sub3 = await prisma.submission.upsert({
+    where: { id: "campa-sub-03" },
+    update: {
+      title: "Campa Cola — The Great Indian Taste (National Launch)",
+      contentText:
+        "Refresh your celebrations with the classic taste of Campa Cola, bottled by Reliance Consumer Products Ltd. Best served chilled between 4°C and 8°C. 500ml bottle at MRP ₹20.",
+      tags: ["NationalLaunch", "Heritage", "Approved"],
+      status: "APPROVED",
+      brandProfileId: brand.id,
+      creatorId: creator.id,
+      reviewerId: reviewer.id,
+      imageName: "campacola-campaign.png",
+      imageUrl: "/campacola-campaign.png",
+      imageAltText: "Official Campa Cola 500ml bottle banner with verified high-contrast typography and authentic wave mark",
+    },
+    create: {
+      id: "campa-sub-03",
+      title: "Campa Cola — The Great Indian Taste (National Launch)",
+      contentText:
+        "Refresh your celebrations with the classic taste of Campa Cola, bottled by Reliance Consumer Products Ltd. Best served chilled between 4°C and 8°C. 500ml bottle at MRP ₹20.",
+      tags: ["NationalLaunch", "Heritage", "Approved"],
+      status: "APPROVED",
+      brandProfileId: brand.id,
+      creatorId: creator.id,
+      reviewerId: reviewer.id,
+      imageName: "campacola-campaign.png",
+      imageUrl: "/campacola-campaign.png",
+      imageAltText: "Official Campa Cola 500ml bottle banner with verified high-contrast typography and authentic wave mark",
+    },
+  });
+
+  // Release Passport for Submission 3
+  await prisma.releasePassport.upsert({
+    where: { submissionId: sub3.id },
+    update: {
+      passportHash: "campa-national-launch-passport-cert-2026-sha256",
+      snapshot: {
+        submissionId: sub3.id,
+        title: sub3.title,
+        contentText: sub3.contentText,
+        brandProfileId: brand.id,
+        brandName: "Campa Cola",
+        reviewerId: reviewer.id,
+        reviewerEmail: reviewer.email,
+        approvedAt: new Date().toISOString(),
+        certification: "WCAG 2.2 AA Verified · Truth-Engine Certified · Zero Violations",
+      },
+    },
+    create: {
+      submissionId: sub3.id,
+      passportHash: "campa-national-launch-passport-cert-2026-sha256",
+      snapshot: {
+        submissionId: sub3.id,
+        title: sub3.title,
+        contentText: sub3.contentText,
+        brandProfileId: brand.id,
+        brandName: "Campa Cola",
+        reviewerId: reviewer.id,
+        reviewerEmail: reviewer.email,
+        approvedAt: new Date().toISOString(),
+        certification: "WCAG 2.2 AA Verified · Truth-Engine Certified · Zero Violations",
+      },
+    },
+  });
+
+  console.log("Campa Cola demo brand, rules, facts, and preloaded campaigns seeded successfully.");
 }
 
 main()

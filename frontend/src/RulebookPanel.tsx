@@ -679,12 +679,12 @@ export default function RulebookPanel({
                     </div>
                     <div className="bf-field bf-rulebook-full-width">
                       <label className="bf-label" htmlFor="bf-primary-logo-wordmark">Expected wordmark (optional)</label>
-                      <input id="bf-primary-logo-wordmark" className="bf-input" value={logoWordmark} onChange={(event) => setLogoWordmark(event.target.value)} maxLength={120} placeholder="e.g. PahariKnits" />
+                      <input id="bf-primary-logo-wordmark" className="bf-input" value={logoWordmark} onChange={(event) => setLogoWordmark(event.target.value)} maxLength={120} placeholder="e.g. Campa Cola" />
                       <p className="bf-section-meta">Used to check visible spelling when the campaign image makes the text legible.</p>
                     </div>
                     <div className="bf-field bf-rulebook-full-width">
                       <label className="bf-label" htmlFor="bf-primary-logo-description">Logo usage notes (optional)</label>
-                      <textarea id="bf-primary-logo-description" className="bf-input bf-rulebook-textarea" value={logoDescription} onChange={(event) => setLogoDescription(event.target.value)} maxLength={1000} placeholder="e.g. Use the navy-and-teal mark; do not stretch or recolor." />
+                      <textarea id="bf-primary-logo-description" className="bf-input bf-rulebook-textarea" value={logoDescription} onChange={(event) => setLogoDescription(event.target.value)} maxLength={1000} placeholder="e.g. Use the official Campa Cola wave ribbon mark; do not alter red/white palette or recolor." />
                     </div>
                     <label className="bf-brand-asset-required">
                       <input type="checkbox" checked={logoRequired} onChange={(event) => setLogoRequired(event.target.checked)} />

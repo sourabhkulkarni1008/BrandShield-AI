@@ -323,7 +323,7 @@ BRAND SHIELD/
 │   ├── prisma/
 │   │   ├── migrations/              # PostgreSQL database migrations
 │   │   ├── schema.prisma            # Prisma schema (10 models, 6 enums)
-│   │   └── seed.ts                  # Seed script for demo accounts & PahariKnits brand
+│   │   └── seed.ts                  # Seed script for demo accounts & Campa Cola brand
 │   ├── src/
 │   │   ├── lib/
 │   │   │   ├── audit-receipts.ts    # SHA-256 config & input hashing
@@ -354,8 +354,10 @@ BRAND SHIELD/
 ├── frontend/
 │   ├── public/
 │   │   ├── brandshield-mark.svg     # Official Brand Shield vector mark
+│   │   ├── campacola-campaign.png   # Preloaded Campa Cola campaign asset
+│   │   ├── campacola-logo.png       # Seed brand fixture logo
 │   │   ├── favicon.svg              # Browser favicon
-│   │   └── pahariknits-logo.png     # Seed brand fixture logo
+│   │   └── pahariknits-logo.png     # Legacy reference asset
 │   ├── src/
 │   │   ├── lib/
 │   │   │   ├── imageAuditCopy.ts    # Image audit copy constants
@@ -535,7 +537,7 @@ All tests were executed directly in the repository environment using native Node
 
 1. **OCR Region Precision**: Visual text detection depends on clear contrast between text and background. Highly stylized, low-resolution, or cursive scripts may require manual bounding confirmation.
 2. **Third-Party AI Dependency**: While deterministic regex rules and numeric claim verification operate 100% offline, semantic tone evaluation requires an active `GEMINI_API_KEY` and network access.
-3. **Single Active Brand Profile**: The current deployment models multiple brands in the schema, but defaults to the primary seeded profile (`PahariKnits`) for demo evaluation.
+3. **Single Active Brand Profile**: The current deployment models multiple brands in the schema, but defaults to the primary seeded profile (`Campa Cola`) for demo evaluation.
 
 ---
 
