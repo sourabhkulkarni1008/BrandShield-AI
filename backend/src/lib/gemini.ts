@@ -38,7 +38,8 @@ export function getGeminiModel(): string {
 }
 
 export function getGoogleGenAI(customApiKey?: string): GoogleGenAI | null {
-  const key = customApiKey?.trim() || process.env.GEMINI_API_KEY?.trim();
+  const raw = customApiKey?.trim() || process.env.GEMINI_API_KEY?.trim();
+  const key = raw ? raw.replace(/\s+/g, "") : null;
   return key ? new GoogleGenAI({ apiKey: key }) : null;
 }
 
@@ -46,7 +47,7 @@ export async function testGeminiApiKey(
   apiKey: string,
 ): Promise<{ valid: boolean; model: string; error?: string }> {
   try {
-    const key = apiKey.trim();
+    const key = apiKey.replace(/\s+/g, "");
     if (!key) return { valid: false, model: getGeminiModel(), error: "API key is required." };
     const client = new GoogleGenAI({ apiKey: key });
     const candidateModels = [getGeminiModel(), "gemini-flash-latest", "gemini-2.5-flash", "gemini-3.8-flash"];
