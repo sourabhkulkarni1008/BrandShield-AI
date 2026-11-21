@@ -158,6 +158,35 @@ const DEMO_ACCESS_ENABLED =
 
 const BRAND_PROFILE_ID = 'brandflight-demo'
 
+export const getStoredAuthToken = (): string =>
+  window.sessionStorage.getItem('brandshield_token') ||
+  window.sessionStorage.getItem('brandflight_token') ||
+  ''
+
+export const setStoredAuthToken = (token: string): void => {
+  window.sessionStorage.setItem('brandshield_token', token)
+  window.sessionStorage.setItem('brandflight_token', token)
+}
+
+export const clearStoredAuthToken = (): void => {
+  window.sessionStorage.removeItem('brandshield_token')
+  window.sessionStorage.removeItem('brandflight_token')
+}
+
+export const getStoredSaveToast = (): string | null =>
+  window.sessionStorage.getItem('brandshield_pending_save_toast') ||
+  window.sessionStorage.getItem('brandflight_pending_save_toast')
+
+export const setStoredSaveToast = (msg: string): void => {
+  window.sessionStorage.setItem('brandshield_pending_save_toast', msg)
+  window.sessionStorage.setItem('brandflight_pending_save_toast', msg)
+}
+
+export const clearStoredSaveToast = (): void => {
+  window.sessionStorage.removeItem('brandshield_pending_save_toast')
+  window.sessionStorage.removeItem('brandflight_pending_save_toast')
+}
+
 const SEEDED_BRAND_PROFILE = {
   id: 'brandflight-demo',
   name: 'PahariKnits',
@@ -423,7 +452,7 @@ export function App() {
   }, [setActiveView])
   const handleInitialReviewSelectionHandled = useCallback(() => setPendingManagerSubmissionId(null), [])
   const [authChecking, setAuthChecking] = useState(
-    () => Boolean(window.sessionStorage.getItem('brandflight_token')),
+    () => Boolean(getStoredAuthToken()),
   )
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
@@ -487,7 +516,7 @@ export function App() {
   }, [saveDraftMessage])
 
   useEffect(() => {
-    const token = window.sessionStorage.getItem('brandflight_token')
+    const token = getStoredAuthToken()
 
     if (!token) return
 
@@ -511,7 +540,7 @@ export function App() {
           setAuthSession({ token: sessionToken, user: data.user })
         }
       } catch {
-        window.sessionStorage.removeItem('brandflight_token')
+        clearStoredAuthToken()
       } finally {
         if (!cancelled) {
           setAuthChecking(false)
@@ -703,13 +732,13 @@ export function App() {
     navigate,
   ])
 
-  /* BrandFlight save toast waits for editor route */
+  /* Brand Shield save toast waits for editor route */
   useEffect(() => {
     if (!routeSubmissionId || routeDraftLoadedId !== routeSubmissionId) return
     const timeoutId = window.setTimeout(() => {
-      const pendingMessage = window.sessionStorage.getItem('brandflight_pending_save_toast')
+      const pendingMessage = getStoredSaveToast()
       if (!pendingMessage) return
-      window.sessionStorage.removeItem('brandflight_pending_save_toast')
+      clearStoredSaveToast()
       setSaveDraftMessage(pendingMessage)
     }, 0)
     return () => window.clearTimeout(timeoutId)
@@ -748,7 +777,7 @@ export function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${window.sessionStorage.getItem('brandflight_token') ?? ''}`,
+          Authorization: `Bearer ${getStoredAuthToken()}`,
         },
         body: JSON.stringify({
           brandProfileId: BRAND_PROFILE_ID,
@@ -812,7 +841,7 @@ export function App() {
       const response = await fetch(`${API_BASE_URL}/api/audit/image`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${window.sessionStorage.getItem('brandflight_token') ?? ''}`,
+          Authorization: `Bearer ${getStoredAuthToken()}`,
         },
         body: formData,
       })
@@ -1123,7 +1152,7 @@ export function App() {
         throw new Error(data?.error ?? 'Login failed. Check your credentials.')
       }
 
-      window.sessionStorage.setItem('brandflight_token', data.token)
+      setStoredAuthToken(data.token)
       setAuthSession({ token: data.token, user: data.user })
       setLoginPassword('')
       navigate(
@@ -1167,7 +1196,7 @@ export function App() {
         throw new Error(data?.error ?? 'Unable to enter this demo role.')
       }
 
-      window.sessionStorage.setItem('brandflight_token', data.token)
+      setStoredAuthToken(data.token)
       setAuthSession({ token: data.token, user: data.user })
       setLoginPassword('')
       setPendingManagerSubmissionId(null)
@@ -1189,7 +1218,7 @@ export function App() {
   }
 
   const handleLogout = () => {
-    window.sessionStorage.removeItem('brandflight_token')
+    clearStoredAuthToken()
     setAuthSession(null)
     setLoginPassword('')
     setLoginError(null)
@@ -1468,10 +1497,10 @@ export function App() {
         : isUpdating
           ? 'Draft updated. Open Saved Submissions to continue or submit it for review.'
           : 'Draft saved. Open Saved Submissions to submit it for review.'
-      window.sessionStorage.setItem('brandflight_pending_save_toast', saveToastMessage)
+      setStoredSaveToast(saveToastMessage)
       const targetEditPath = `/submissions/${encodeURIComponent(data.submission.id)}/edit`
       if (location.pathname === targetEditPath) {
-        window.sessionStorage.removeItem('brandflight_pending_save_toast')
+        clearStoredSaveToast()
         setSaveDraftMessage(saveToastMessage)
       } else {
         navigate(targetEditPath)

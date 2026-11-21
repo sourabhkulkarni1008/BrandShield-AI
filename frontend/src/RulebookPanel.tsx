@@ -107,7 +107,9 @@ async function apiRequest<T>(
   init: RequestInit = {},
 ): Promise<T> {
   const headers = new Headers(init.headers)
-  const token = window.sessionStorage.getItem('brandflight_token')
+  const token =
+    window.sessionStorage.getItem('brandshield_token') ||
+    window.sessionStorage.getItem('brandflight_token')
 
   if (token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`)
