@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import ReleasePassportCard from './ReleasePassportCard'
 
 interface ApprovedSummary {
   id: string
   title: string
-  tags: string[]
+  tags?: string[]
   status: string
   createdAt: string
   updatedAt: string
   brandProfile?: { id: string; name: string } | null
   creator?: { id: string; name: string; email?: string; role?: string } | null
-  _count: { findings: number; comments: number; revisions: number }
+  _count?: { findings: number; comments: number; revisions: number }
+  releasePassport?: { id: string; passportHash: string; issuedAt: string } | null
 }
 
 interface ApprovedComment {
@@ -24,14 +26,14 @@ interface ApprovedDetail extends ApprovedSummary {
   imageName: string | null
   imageAltText: string | null
   imageUrl: string | null
-  imageAuditData: {
+  imageAuditData?: {
     totalFindings?: number
     findings?: Array<{ title: string; category: string; severity: string; message: string }>
     image?: { dominantColors?: string[]; width?: number | null; height?: number | null }
     logoVerification?: { status?: string; summary?: string; confidence?: number }
   } | null
-  comments: ApprovedComment[]
-  findings: Array<{ id: string; title: string; category: string; severity: string; message: string }>
+  comments?: ApprovedComment[]
+  findings?: Array<{ id: string; title: string; category: string; severity: string; message: string }>
 }
 
 interface Props {
@@ -39,9 +41,10 @@ interface Props {
   token: string
 }
 
-function displayDate(value: string) {
+function displayDate(value: string | undefined | null) {
+  if (!value) return 'Recently'
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? 'Date unavailable' : date.toLocaleDateString(undefined, {
+  return Number.isNaN(date.getTime()) ? 'Recently' : date.toLocaleDateString(undefined, {
     year: 'numeric', month: 'short', day: 'numeric',
   })
 }
@@ -84,7 +87,7 @@ export default function ApprovedCampaignsPanel({ apiBaseUrl, token }: Props) {
     return () => window.clearTimeout(timerId)
   }, [loadCampaigns])
 
-  const openCampaign = async (item: ApprovedSummary) => {
+  const openCampaign = useCallback(async (item: ApprovedSummary) => {
     setSelectedId(item.id)
     setOpening(true)
     setError(null)
@@ -110,11 +113,18 @@ export default function ApprovedCampaignsPanel({ apiBaseUrl, token }: Props) {
     } finally {
       setOpening(false)
     }
-  }
+  }, [apiBaseUrl, token])
+
+  // Automatically select the first campaign if none is currently selected
+  useEffect(() => {
+    if (campaigns.length > 0 && !selectedId && !opening) {
+      void openCampaign(campaigns[0])
+    }
+  }, [campaigns, selectedId, opening, openCampaign])
 
   const normalizedSearch = search.trim().toLowerCase()
   const filteredCampaigns = campaigns.filter((item) => [
-    item.title,
+    item.title ?? '',
     item.brandProfile?.name ?? '',
     item.creator?.name ?? '',
   ].some((value) => value.toLowerCase().includes(normalizedSearch)))
@@ -142,10 +152,17 @@ export default function ApprovedCampaignsPanel({ apiBaseUrl, token }: Props) {
         throw new Error(data?.error ?? `Unable to post comment (HTTP ${response.status}).`)
       }
       setSelected((current) => current && current.id === selected.id
-        ? { ...current, comments: [...current.comments, data.comment!] }
+        ? { ...current, comments: [...(current.comments ?? []), data.comment!] }
         : current)
       setCampaigns((current) => current.map((item) => item.id === selected.id
-        ? { ...item, _count: { ...item._count, comments: item._count.comments + 1 } }
+        ? {
+            ...item,
+            _count: {
+              findings: item._count?.findings ?? 0,
+              revisions: item._count?.revisions ?? 1,
+              comments: (item._count?.comments ?? 0) + 1,
+            },
+          }
         : item))
       setCommentText('')
       setNotice('Comment added to the campaign discussion.')
@@ -229,7 +246,7 @@ export default function ApprovedCampaignsPanel({ apiBaseUrl, token }: Props) {
                 </span>
                 <strong>{item.title}</strong>
                 <span className="bf-approved-item-meta">{item.brandProfile?.name ?? 'Brand'} · {item.creator?.name ?? 'Creator'}</span>
-                <span className="bf-approved-item-counts">{item._count.comments} comments · {item._count.revisions} revisions</span>
+                <span className="bf-approved-item-counts">{item._count?.comments ?? 0} comments · {item._count?.revisions ?? 0} revisions</span>
               </button>
             </article>
           ))}
@@ -242,7 +259,7 @@ export default function ApprovedCampaignsPanel({ apiBaseUrl, token }: Props) {
             <div className="bf-approved-detail-empty">
               <span className="bf-approved-detail-mark" aria-hidden="true">✓</span>
               <h2>Select an approved campaign</h2>
-              <p>View the final copy and image of your approved campaign :)</p>
+              <p>View the final copy, release passport, and image of your approved campaign.</p>
             </div>
           ) : (
             <>
@@ -252,7 +269,13 @@ export default function ApprovedCampaignsPanel({ apiBaseUrl, token }: Props) {
                   <h2>{selected.title}</h2>
                   <p>{selected.brandProfile?.name ?? 'Brand'} · Created by {selected.creator?.name ?? 'Creator'} · Approved {displayDate(selected.updatedAt)}</p>
                 </div>
-                {selected.tags?.length > 0 && <div className="bf-approved-tags">{selected.tags.map((tag) => <span key={tag}>{tag.replace(/_/g, ' ')}</span>)}</div>}
+                {(selected.tags ?? []).length > 0 && (
+                  <div className="bf-approved-tags">
+                    {(selected.tags ?? []).map((tag) => (
+                      <span key={tag}>{typeof tag === 'string' ? tag.replace(/_/g, ' ') : String(tag)}</span>
+                    ))}
+                  </div>
+                )}
               </header>
 
               <section className="bf-approved-section">
@@ -273,36 +296,49 @@ export default function ApprovedCampaignsPanel({ apiBaseUrl, token }: Props) {
                 )}
               </section>
 
+              {/* Verified Cryptographic Release Passport */}
+              {selected.releasePassport && (
+                <ReleasePassportCard passport={selected.releasePassport} apiBaseUrl={apiBaseUrl} />
+              )}
+
               <section className="bf-approved-discussion" aria-labelledby="bf-approved-discussion-title">
                 <div className="bf-approved-discussion-head">
                   <div><h3 id="bf-approved-discussion-title">Campaign discussion</h3><p>Comments are shared with Creator, Reviewer, and Manager.</p></div>
-                  <span>{selected.comments.length}</span>
+                  <span>{(selected.comments ?? []).length}</span>
                 </div>
                 <div className="bf-approved-thread" aria-live="polite">
-                  {selected.comments.length === 0 ? (
+                  {(selected.comments ?? []).length === 0 ? (
                     <div className="bf-approved-thread-empty"><strong>Start the conversation</strong><p>No comments on this approved campaign yet.</p></div>
-                  ) : selected.comments.map((comment) => (
-                    <article className="bf-approved-comment" key={comment.id}>
-                      <div className="bf-approved-comment-meta">
-                        <strong>{comment.author?.name ?? 'Workspace member'}</strong>
-                        <span>{comment.author?.role ?? 'User'}</span>
-                        <time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleString()}</time>
-                      </div>
-                      {comment.body.startsWith('CREATOR UPDATE') ? (
-                        <>
-                          <span className="bf-creator-update-badge">Creator submission note</span>
-                          <p>{comment.body.split('\n').slice(1).join('\n').trim()}</p>
-                        </>
-                      ) : comment.body.startsWith('OVERRIDE DECISION') ? (
-                        <>
-                          <span className={`bf-override-decision-badge ${comment.body.includes('\nDecision: ACCEPTED\n') ? 'accepted' : 'rejected'}`}>
-                            {comment.body.includes('\nDecision: ACCEPTED\n') ? 'Override request accepted' : 'Override request rejected'}
-                          </span>
-                          <p>{comment.body.split('\n').find((line) => line.startsWith('Decision note: '))?.slice('Decision note: '.length)}</p>
-                        </>
-                      ) : <p>{comment.body}</p>}
-                    </article>
-                  ))}
+                  ) : (selected.comments ?? []).map((comment) => {
+                    const body = typeof comment?.body === 'string' ? comment.body : ''
+                    return (
+                      <article className="bf-approved-comment" key={comment.id}>
+                        <div className="bf-approved-comment-meta">
+                          <strong>{comment.author?.name ?? 'Workspace member'}</strong>
+                          <span>{comment.author?.role ?? 'User'}</span>
+                          <time dateTime={comment.createdAt}>{new Date(comment.createdAt || Date.now()).toLocaleString()}</time>
+                        </div>
+                        {body.startsWith('CREATOR UPDATE') ? (
+                          <>
+                            <span className="bf-creator-update-badge">Creator submission note</span>
+                            <p>{body.split('\n').slice(1).join('\n').trim()}</p>
+                          </>
+                        ) : body.startsWith('OVERRIDE DECISION') ? (
+                          <>
+                            <span className={`bf-override-decision-badge ${body.includes('\nDecision: ACCEPTED\n') ? 'accepted' : 'rejected'}`}>
+                              {body.includes('\nDecision: ACCEPTED\n') ? 'Override request accepted' : 'Override request rejected'}
+                            </span>
+                            <p>{body.split('\n').find((line) => line.startsWith('Decision note: '))?.slice('Decision note: '.length)}</p>
+                          </>
+                        ) : body.startsWith('REVIEWER OVERRIDE') ? (
+                          <>
+                            <span className="bf-override-message-badge">Reviewer override · signed into Release Passport</span>
+                            <p className="bf-review-override-text">{body.replace(/^REVIEWER OVERRIDE:?\s*/, '')}</p>
+                          </>
+                        ) : <p>{body}</p>}
+                      </article>
+                    )
+                  })}
                 </div>
                 <form className="bf-approved-comment-form" onSubmit={(event) => void postComment(event)}>
                   <label htmlFor="bf-approved-comment-input">Add to discussion</label>

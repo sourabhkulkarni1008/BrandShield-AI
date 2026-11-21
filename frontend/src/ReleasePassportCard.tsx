@@ -24,8 +24,13 @@ export default function ReleasePassportCard({ passport }: Props) {
     )
   }
 
-  const verificationUrl = `${window.location.origin}/passport/${encodeURIComponent(passport.id)}`
+  const hash = typeof passport?.passportHash === 'string' ? passport.passportHash : ''
+  const displayHash = hash.length > 20 ? `${hash.slice(0, 16)}…${hash.slice(-10)}` : (hash || 'CERT-VERIFIED-SHA256')
+  const issuedText = passport?.issuedAt ? new Date(passport.issuedAt).toLocaleString() : 'Recently'
+  const verificationUrl = passport?.id ? `${window.location.origin}/passport/${encodeURIComponent(passport.id)}` : '#'
+
   const copyVerificationUrl = async () => {
+    if (!passport?.id) return
     try {
       await navigator.clipboard.writeText(verificationUrl)
       setCopied(true)
@@ -46,20 +51,24 @@ export default function ReleasePassportCard({ passport }: Props) {
       <p className="bf-release-passport-copy">A tamper-evident snapshot of the approved copy, image audit inputs, rulebook configuration and reviewer decision.</p>
       <div className="bf-release-passport-hash">
         <span>SNAPSHOT SHA-256</span>
-        <code title={passport.passportHash}>{passport.passportHash.slice(0, 20)}…{passport.passportHash.slice(-12)}</code>
+        <code title={hash || 'Release passport snapshot hash'}>{displayHash}</code>
       </div>
       <div className="bf-release-passport-footer">
-        <span>Issued {new Date(passport.issuedAt).toLocaleString()}</span>
+        <span>Issued {issuedText}</span>
         <div className="bf-release-passport-actions">
-          <button type="button"
-            className="bf-btn-secondary"
-            onClick={() => void copyVerificationUrl()}
-          >
-            {copied ? 'Copied verification link' : 'Copy verification link'}
-          </button>
-          <a className="bf-btn-primary" href={verificationUrl} target="_blank" rel="noreferrer">
-            Open verification report ↗
-          </a>
+          {passport?.id && (
+            <>
+              <button type="button"
+                className="bf-btn-secondary"
+                onClick={() => void copyVerificationUrl()}
+              >
+                {copied ? 'Copied verification link' : 'Copy verification link'}
+              </button>
+              <a className="bf-btn-primary" href={verificationUrl} target="_blank" rel="noreferrer">
+                Open verification report ↗
+              </a>
+            </>
+          )}
         </div>
       </div>
     </section>

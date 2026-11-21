@@ -3152,6 +3152,7 @@ export function App() {
             onOpenReviewQueue={() => setActiveView('review')}
             onOpenRulebook={() => setActiveView('rulebook')}
             onOpenSubmission={handleManagerOpenSubmission}
+            onOpenApprovedCampaigns={() => setActiveView('approved')}
           />
         ) : activeView === 'submissions' && authSession.user.role === 'CREATOR' ? (
           <SavedSubmissionsPanel

@@ -347,7 +347,16 @@ export const inMemorySubmissions = new Map<string, any>([
       updatedAt: new Date(),
       creator: inMemoryUsers[0],
       reviewer: inMemoryUsers[1],
-      comments: [],
+      comments: [
+        {
+          id: "cmt-campa-03-1",
+          submissionId: "campa-sub-03",
+          authorId: "usr_demo_reviewer",
+          body: "REVIEWER OVERRIDE: Verified all product attributes against Reliance Consumer Products catalogue. MRP ₹20 for 500ml and serving temperature 4-8°C confirmed.",
+          createdAt: new Date(Date.now() - 86000000),
+          author: inMemoryUsers[1],
+        },
+      ],
       findings: [],
       revisions: [
         {
@@ -361,7 +370,7 @@ export const inMemorySubmissions = new Map<string, any>([
           imagePublicId: "inline-campa-03",
         },
       ],
-      _count: { findings: 0, comments: 0, revisions: 1 },
+      _count: { findings: 0, comments: 1, revisions: 1 },
     },
   ],
 ]);
@@ -382,10 +391,11 @@ export const inMemoryPassports = new Map<string, any>([
         brandName: "Campa Cola",
         reviewerId: "usr_demo_reviewer",
         reviewerEmail: "reviewer@brandflight.demo",
-        approvedAt: new Date().toISOString(),
+        approvedAt: new Date(Date.now() - 86400000).toISOString(),
         certification: "WCAG 2.2 AA Verified · Truth-Engine Certified · Zero Violations",
       },
-      createdAt: new Date(),
+      issuedAt: new Date(Date.now() - 86400000).toISOString(),
+      createdAt: new Date(Date.now() - 86400000),
     },
   ],
 ]);
@@ -545,6 +555,7 @@ export function createFallbackPrismaClient() {
             imagePublicId: sub.imagePublicId ?? null,
           },
         ];
+        const passport = inMemoryPassports.get(sub.id) ?? sub.releasePassport ?? null;
         return {
           ...sub,
           brandProfile: { id: inMemoryBrand.id, name: inMemoryBrand.name },
@@ -553,6 +564,7 @@ export function createFallbackPrismaClient() {
           findings,
           comments: sub.comments?.length ? sub.comments : comments,
           revisions,
+          releasePassport: passport,
           _count: {
             findings: findings.length,
             comments: (sub.comments?.length ? sub.comments : comments).length,
@@ -575,6 +587,16 @@ export function createFallbackPrismaClient() {
             list = list.filter((s) => args.where.status.in.includes(s.status));
           }
         }
+        if (Array.isArray(args?.where?.OR)) {
+          list = list.filter((s) => {
+            return args.where.OR.some((condition: any) => {
+              if (condition.status && s.status !== condition.status) return false;
+              if (condition.reviewerId && s.reviewerId !== condition.reviewerId) return false;
+              if (condition.creatorId && s.creatorId !== condition.creatorId) return false;
+              return true;
+            });
+          });
+        }
         return list.map((sub) => {
           const findings = sub.findings ?? DEFAULT_FINDINGS;
           const comments = Array.from(inMemoryComments.values()).filter((c) => c.submissionId === sub.id);
@@ -589,6 +611,7 @@ export function createFallbackPrismaClient() {
               imagePublicId: sub.imagePublicId ?? null,
             },
           ];
+          const passport = inMemoryPassports.get(sub.id) ?? sub.releasePassport ?? null;
           return {
             ...sub,
             brandProfile: { id: inMemoryBrand.id, name: inMemoryBrand.name },
@@ -597,6 +620,7 @@ export function createFallbackPrismaClient() {
             findings,
             comments: sub.comments?.length ? sub.comments : comments,
             revisions,
+            releasePassport: passport ? { id: passport.id, passportHash: passport.passportHash, issuedAt: passport.issuedAt } : null,
             _count: {
               findings: findings.length,
               comments: (sub.comments?.length ? sub.comments : comments).length,

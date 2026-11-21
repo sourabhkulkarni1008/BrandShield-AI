@@ -46,6 +46,7 @@ interface ManagerDashboardProps {
   onOpenReviewQueue: () => void
   onOpenRulebook: () => void
   onOpenSubmission: (submissionId: string) => void
+  onOpenApprovedCampaigns?: () => void
 }
 
 const STATUS_META: Record<string, { label: string; className: string }> = {
@@ -74,6 +75,7 @@ export default function ManagerDashboard({
   onOpenReviewQueue,
   onOpenRulebook,
   onOpenSubmission,
+  onOpenApprovedCampaigns,
 }: ManagerDashboardProps) {
   const [submissions, setSubmissions] = useState<SubmissionSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -199,6 +201,16 @@ export default function ManagerDashboard({
           </span>
           <span className="bf-manager-action-arrow" aria-hidden="true">→</span>
         </button>
+        {onOpenApprovedCampaigns && (
+          <button type="button" className="bf-manager-action" onClick={onOpenApprovedCampaigns}>
+            <span className="bf-manager-action-icon" aria-hidden="true">✓</span>
+            <span>
+              <strong>Approved Campaigns</strong>
+              <small>View released campaigns, passports, and shared discussions.</small>
+            </span>
+            <span className="bf-manager-action-arrow" aria-hidden="true">→</span>
+          </button>
+        )}
       </div>
 
       {error && <div className="bf-save-feedback error" role="alert">{error}</div>}
@@ -219,7 +231,12 @@ export default function ManagerDashboard({
           <strong>{loading ? '—' : counts.changesRequested}</strong>
           <span className="bf-manager-metric-note">Returned to creators</span>
         </article>
-        <article className="bf-manager-metric">
+        <article
+          className={`bf-manager-metric${filter === 'APPROVED' ? ' is-active' : ''}`}
+          style={{ cursor: 'pointer' }}
+          onClick={() => setFilter(filter === 'APPROVED' ? 'ALL' : 'APPROVED')}
+          title="Filter approved campaigns"
+        >
           <span className="bf-manager-metric-label">Approved</span>
           <strong>{loading ? '—' : counts.approved}</strong>
           <span className="bf-manager-metric-note">Cleared by review</span>
