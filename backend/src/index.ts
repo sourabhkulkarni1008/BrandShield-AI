@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { prisma } from "./lib/prisma.js";
+import { prisma, getDatabaseStatus } from "./lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
 import { auditConfigHash, createAuditReceiptId, sha256Text } from "./lib/audit-receipts.js";
 import { getGeminiModel, refineMarketingCopy, runSemanticAudit, testGeminiApiKey } from "./lib/gemini.js";
@@ -19,6 +19,8 @@ const ALLOWED_ORIGINS = new Set([
   "http://localhost:5173",
   "http://localhost:3000",
   "https://brand-shield-ai-six.vercel.app",
+  "https://brandshield.cv",
+  "http://brandshield.cv",
 ]);
 
 app.use(
@@ -44,14 +46,10 @@ app.use(express.json({ limit: "1mb" }));
 app.get("/api/health", async (_req, res) => {
   let dbStatus = "unknown";
   try {
-    if (!process.env.DATABASE_URL) {
-      dbStatus = "missing_database_url";
-    } else {
-      await prisma.$queryRaw`SELECT 1`;
-      dbStatus = "connected";
-    }
-  } catch (err: any) {
-    dbStatus = `error: ${err?.message || String(err)}`;
+    await prisma.$queryRaw`SELECT 1`;
+    dbStatus = getDatabaseStatus();
+  } catch {
+    dbStatus = getDatabaseStatus();
   }
 
   const hasKey = Boolean(process.env.GEMINI_API_KEY?.trim());

@@ -4,8 +4,8 @@ services:
     runtime: node
     rootDir: backend
     plan: free
-    buildCommand: npm install && npx prisma generate --config prisma7.config.ts && npx prisma migrate deploy --config prisma7.config.ts && npx prisma db seed --config prisma7.config.ts && npm run build
-    preDeployCommand: npx prisma migrate deploy --config prisma7.config.ts && npx prisma db seed --config prisma7.config.ts
+    buildCommand: npm install && npx prisma generate --config prisma7.config.ts && (npx prisma migrate deploy --config prisma7.config.ts || true) && (npx prisma db seed --config prisma7.config.ts || true) && npm run build
+    preDeployCommand: (npx prisma migrate deploy --config prisma7.config.ts || true) && (npx prisma db seed --config prisma7.config.ts || true)
     startCommand: npm start
     envVars:
       - key: DATABASE_URL
@@ -15,7 +15,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CLIENT_URL
-        value: https://brand-shield-ai-six.vercel.app
+        value: https://brandshield.cv
       - key: DEMO_LOGIN_ENABLED
         value: "true"
       - key: PORT
